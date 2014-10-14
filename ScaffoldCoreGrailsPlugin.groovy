@@ -41,7 +41,7 @@ Brief summary/description of the plugin.
     }
 
     def doWithSpring = {
-        // TODO Implement runtime spring config (optional)
+		templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator)
     }
 
     def doWithDynamicMethods = { ctx ->

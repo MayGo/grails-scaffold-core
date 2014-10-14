@@ -1,2 +1,7 @@
 .classpath
 .project
+.settings/
+grails-scaffold-core-0.1.zip
+grails-scaffold-core-0.1.zip.sha1
+plugin.xml
+target/
