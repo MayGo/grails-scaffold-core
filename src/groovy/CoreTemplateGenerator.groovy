@@ -47,6 +47,7 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	boolean shouldOverwrite = Holders.config.grails.plugin.extjsscaffolding.overwrite?:true
 	static APP_URL = 'http://localhost:8080/'
 	
+	static SCAFFOLD_DIR = "/src/templates/scaffolding/"
 	static SCAFFOLDING_ASSETS_DIR = "assets/"
 	static SCAFFOLDING_APPLICATION_DIR = "application/"
 	static SCAFFOLDING_DOMAIN_DIR = "domain/"
@@ -230,38 +231,29 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	
 	private gatherResources(String dir){
 		Resource[] resources = []
-		String templatesDirPath
-		if (resourceLoader != null && grailsApplication.isWarDeployed()) {
-			templatesDirPath = "/WEB-INF/templates/scaffolding/"+dir
-			try {
-				PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(resourceLoader);
-				resources = resolver.getResources(templatesDirPath + dir + "**/*.*")
-			}catch (Exception e) {
-				log.error("Error while loading assets from " + templatesDirPath, e);
-			}
-		}else {
-			PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
+		String templatesDirPath = basedir + SCAFFOLD_DIR + dir
+		
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-			templatesDirPath = basedir + "/src/templates/scaffolding/"+dir
-			Resource templatesDir = new FileSystemResource(templatesDirPath + dir + "**/*.*");
-			if (templatesDir.exists()) {
-				try {
-					resources = resolver.getResources(templatesDirPath);
-				}catch (Exception e) {
-					log.error("Error while loading assets from " + basedir, e);
-				}
-			}
-			if(!resources) {
-				File pluginDir = templatesLocator.getPluginDir();
-				try {
-					templatesDirPath = pluginDir.path + "/src/templates/scaffolding/"
-					resources = resolver.getResources("file:" + templatesDirPath + dir + "**/*.*");
-				} catch (Exception e) {
-					// ignore
-					log.error("Error locating assets from " + pluginDir + ": " + e.getMessage(), e);
-				}
+		Resource templatesDir = new FileSystemResource(templatesDirPath + dir + "**/*.*");
+		if (templatesDir.exists()) {
+			try {
+				resources = resolver.getResources(templatesDirPath);
+			}catch (Exception e) {
+				log.error("Error while loading assets from " + basedir, e);
 			}
 		}
+		if(!resources) {
+			File pluginDir = templatesLocator.getPluginDir();
+			try {
+				templatesDirPath = pluginDir.path + SCAFFOLD_DIR
+				resources = resolver.getResources("file:" + templatesDirPath + dir + "**/*.*");
+			} catch (Exception e) {
+				// ignore
+				log.error("Error locating assets from " + pluginDir + ": " + e.getMessage(), e);
+			}
+		}
+		
 		return [resources, templatesDirPath]
 	}
 	
@@ -276,7 +268,7 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		File pluginDir = templatesLocator.getPluginDir();
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 		try {
-			String templatesDirPath = pluginDir.path + "/src/templates/scaffolding/"
+			String templatesDirPath = pluginDir.path + SCAFFOLD_DIR
 			//TODO: Add something more dynamic 
 			Resource r1 = resolver.getResources("file:" + templatesDirPath + "gridEditor.template")[0];
 			Resource r2 = resolver.getResources("file:" + templatesDirPath + "detailViewEditor.template")[0];
