@@ -30,9 +30,10 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	templateGenerator.templatesLocator = appCtx.getBean('templatesLocator')
 	templateGenerator.grailsApplication = grailsApp
 	templateGenerator.pluginManager = pluginManager
-	
+	templateGenerator.generateScaffold(basedir)
 	domainClasses.each { domainClass -> 
-		if (generateDomain) {
+		
+		/*if (generateDomain) {
 			event("StatusUpdate", ["Generating extjs classes for domain class ${domainClass.fullName}"])
 			templateGenerator.generateDomain(domainClass, basedir)
 			event("GenerateStoreEnd", [domainClass.fullName])
@@ -47,25 +48,25 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 			templateGenerator.generateRestfulController(domainClass, basedir)
 			templateGenerator.generateRestfulTest(domainClass, "${basedir}/test/unit")
 			event("GenerateControllerEnd", [domainClass.fullName])
-		}
+		}*/
 		
 		
 	}
 
 	if (generateControllers) {
 		event("StatusUpdate", ["Adding urlMappings"])
-		templateGenerator.addUrlMappings()
+//		templateGenerator.addUrlMappings()
 		event("AddUrlMappingsEnd", ["End"])
 	}
 	if (generateApplication) {
 		event("StatusUpdate", ["Generating application views"])
-		templateGenerator.generateApplication(basedir)
+//		templateGenerator.generateApplication(basedir)
 		event("GenerateApplicationEnd", [])
 	}
 	
 	if (generateAssets) {
 		event("StatusUpdate", ["Generating static views"])
-		templateGenerator.generateAssets(basedir)
+		//templateGenerator.generateAssets(basedir)
 		event("GenerateAssetsEnd", [])
 	}
 	

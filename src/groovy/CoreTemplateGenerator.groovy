@@ -47,6 +47,7 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	boolean shouldOverwrite = Holders.config.grails.plugin.extjsscaffolding.overwrite?:true
 	static APP_URL = 'http://localhost:8080/'
 	
+	static APPLICATION_DIR
 	static SCAFFOLD_DIR = "/src/templates/scaffolding/"
 	static SCAFFOLDING_ASSETS_DIR = "assets/"
 	static SCAFFOLDING_APPLICATION_DIR = "application/"
@@ -56,56 +57,79 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	protected Template detailViewRenderEditorTemplate;
 	
 	TemplatesLocator templatesLocator
-
+	
+	enum ScaffoldType{
+		DYNAMIC,
+		STATIC
+	}
+	Map dynamicFoldersConf = 
+		[
+			"__propertyName__" : {it.propertyName},
+			"__shortName__": {it.shortName}
+		]
+	
+	
 	CoreTemplateGenerator(ClassLoader classLoader) {
 		super(classLoader)
 		setOverwrite(shouldOverwrite)
 	}
 	
-	
-	public void generateAssets(String destDir) throws IOException {
-		Assert.hasText(destDir, "Argument [destdir] not specified");
-
-		Resource[] resources
-		String templatesDirPath
-		(resources, templatesDirPath) = gatherResources(SCAFFOLDING_ASSETS_DIR)
-
-		for (Resource resource : resources) {
-			Path dirPath = Paths.get(templatesDirPath);
-			Path filePath = Paths.get(resource.file.path);
-			Path relativeFilePath = dirPath.relativize(filePath);
-			Path relativeFilePathWithoutStaticDir = relativeFilePath.subpath(1, relativeFilePath.nameCount)
-
-			String fileName = EXTJS_DIR + relativeFilePathWithoutStaticDir
-
-			File destFile = new File(destDir, fileName);
-			if (canWrite(destFile)) {
-				destFile.getParentFile().mkdirs();
-				FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
-			}
+	public void generateScaffold(String applicationDir) throws IOException
+	{
+		Assert.hasText(applicationDir, "Argument [applicationDir] not specified");
+		APPLICATION_DIR = applicationDir
+		String templatesDir = APPLICATION_DIR + SCAFFOLD_DIR
+		if(!templatesExists(templatesDir)) templatesDir = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
+		log.info "Using templates dir: $templatesDir"
+		
+		Map scaffoldDirs = Holders.config.grails.plugin.scaffold.core.folders
+		log.info "Using scaffold dirs from config:$scaffoldDirs"
+		
+		for (Resource resource : gatherResources(templatesDir))
+		{
+			Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(resource.file.path));
 			
+			Path fileRealPath = relativeFilePath.subpath(2, relativeFilePath.nameCount)
+			
+			// locate files output directory
+			String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
+			if(!scaffoldDirs.containsKey(scaffoldDir)) log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
+			String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
+		
+			ScaffoldType scaffoldType = relativeFilePath.subpath(1, 2).toString().toUpperCase() as ScaffoldType
+			if(scaffoldType == ScaffoldType.STATIC)
+			{
+				 File destFile = new File(APPLICATION_DIR, outputFileName);
+				 if (canWrite(destFile))
+				 {
+					// destFile.getParentFile().mkdirs();
+					// FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
+				 }
+			} 
+			else if(scaffoldType == ScaffoldType.DYNAMIC)
+			{
+				boolean generateForEachDomain = outputFileName.find(~/__.+__/)
+				if(generateForEachDomain)
+				{
+					
+					for (GrailsDomainClass domainClass : grailsApplication.domainClasses)
+					{
+						String parsedOutputFileName = outputFileName
+						outputFileName.findAll(~/__.+__/).each{
+							Closure parse = dynamicFoldersConf[it]
+							parsedOutputFileName = parsedOutputFileName.replace(it,parse(domainClass))
+						}
+						createDomainFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
+					}
+				}
+				else
+				{
+					//createApplicationFileFromTemplate(APPLICATION_DIR, outputFileName, resource)
+				}
+			} 
 		}
 	}
 	
-	
-	
-	public void generateApplication(String destDir) throws IOException {
-		Assert.hasText(destDir, "Argument [destdir] not specified");
-
-		Resource[] resources
-		String templatesDirPath
-		(resources, templatesDirPath) = gatherResources(SCAFFOLDING_APPLICATION_DIR)
-
-		for (Resource resource : resources) {
-			Path dirPath = Paths.get(templatesDirPath);
-			Path filePath = Paths.get(resource.file.path);
-			Path relativeFilePath = dirPath.relativize(filePath);
-			Path relativeFilePathWithoutStaticDir = relativeFilePath.subpath(1, relativeFilePath.nameCount)
-
-			String fileName = EXTJS_DIR + relativeFilePathWithoutStaticDir
-			createApplicationFileFromTemplate(destDir, fileName, resource)
-		}
-	}
 	
 	public void createApplicationFileFromTemplate(String destDir, String fileName, Resource templateFile) throws IOException {
 		Assert.hasText(destDir, "Argument [destdir] not specified");
@@ -154,26 +178,7 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	
 	
 	
-	public void generateDomain(GrailsDomainClass domainClass, String destDir) throws IOException {
-		Assert.hasText(destDir, "Argument [destdir] not specified");
 	
-		Resource[] resources
-		String templatesDirPath
-		(resources, templatesDirPath) = gatherResources(SCAFFOLDING_DOMAIN_DIR)
-
-		for (Resource resource : resources) {
-			Path dirPath = Paths.get(templatesDirPath);
-			Path filePath = Paths.get(resource.file.path);
-			Path relativeFilePath = dirPath.relativize(filePath);
-			Path relativeFilePathWithoutStaticDir = relativeFilePath.subpath(1, relativeFilePath.nameCount)
-			
-
-			String fileName = EXTJS_DIR + relativeFilePathWithoutStaticDir
-			fileName = fileName.replace("__propertyName__", domainClass.propertyName)
-			fileName = fileName.replace("__shortName__", domainClass.shortName)
-			createDomainFileFromTemplate(destDir, fileName, resource, domainClass)
-		}
-	}
 	
 	public void createDomainFileFromTemplate(String destDir, String fileName, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
 		Assert.hasText(destDir, "Argument [destdir] not specified");
@@ -212,13 +217,13 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 			}
 		}
 
+		def config = grailsApplication.config
+		def domainClasses = grailsApplication.domainClasses
 		String packageName = StringUtils.hasLength(domainClass.getPackageName()) ? "<%@ page import=\"" + domainClass.getFullName() + "\" %>" : "";
 		Map<String, Object> binding = createBinding(domainClass);
 		binding.put("packageName", packageName);
 		binding.put("multiPart", multiPart);
-		def config = grailsApplication.config
 		binding.put("config", config);
-		def domainClasses = grailsApplication.domainClasses
 		binding.put("domainClasses", domainClasses);
 		binding.put("propertyName", getPropertyName(domainClass));
 		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""));
@@ -228,38 +233,35 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		generate(templateText, binding, out);
 	}
 	
+	private boolean templatesExists(String templatesDir)
+	{
+		Resource templatesResource = new FileSystemResource(templatesDir);
+		return templatesResource.exists()
+	}
 	
-	private gatherResources(String dir){
+	private Resource[] gatherResources(String templatesDir)
+	{
 		Resource[] resources = []
-		String templatesDirPath = basedir + SCAFFOLD_DIR + dir
 		
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-
-		Resource templatesDir = new FileSystemResource(templatesDirPath + dir + "**/*.*");
-		if (templatesDir.exists()) {
+		Resource templatesResource = new FileSystemResource(templatesDir );
+		if (templatesResource.exists()) {
 			try {
-				resources = resolver.getResources(templatesDirPath);
+				resources = resolver.getResources("file:" + templatesDir + "**/*.*");
 			}catch (Exception e) {
-				log.error("Error while loading assets from " + basedir, e);
+				log.error("Error while loading assets from " + templatesDir, e);
 			}
+		}else{
+			log.info "Templates dir $templatesDir does not exists."
 		}
-		if(!resources) {
-			File pluginDir = templatesLocator.getPluginDir();
-			try {
-				templatesDirPath = pluginDir.path + SCAFFOLD_DIR
-				resources = resolver.getResources("file:" + templatesDirPath + dir + "**/*.*");
-			} catch (Exception e) {
-				// ignore
-				log.error("Error locating assets from " + pluginDir + ": " + e.getMessage(), e);
-			}
-		}
-		
-		return [resources, templatesDirPath]
+				
+		return resources
 	}
+	
 	
 
 	def renderEditor = { GrailsDomainClassProperty property, boolean isDetailView = false ->
-		def domainClass = property.domainClass
+		/*def domainClass = property.domainClass
 		def cp
 		boolean hasHibernate = pluginManager?.hasGrailsPlugin('hibernate') || pluginManager?.hasGrailsPlugin('hibernate4')
 		if (hasHibernate) {
@@ -268,10 +270,10 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		File pluginDir = templatesLocator.getPluginDir();
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 		try {
-			String templatesDirPath = pluginDir.path + SCAFFOLD_DIR
+			String templatesDir = pluginDir.path + SCAFFOLD_DIR
 			//TODO: Add something more dynamic 
-			Resource r1 = resolver.getResources("file:" + templatesDirPath + "gridEditor.template")[0];
-			Resource r2 = resolver.getResources("file:" + templatesDirPath + "detailViewEditor.template")[0];
+			Resource r1 = resolver.getResources("file:" + templatesDir + "gridEditor.template")[0];
+			Resource r2 = resolver.getResources("file:" + templatesDir + "detailViewEditor.template")[0];
 		
 			if (!gridRenderEditorTemplate) {
 				// create template once for performance
@@ -293,7 +295,8 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 			cp: cp,
 			domainInstance:getPropertyName(domainClass)]
 		if(isDetailView) return detailViewRenderEditorTemplate.make(binding).toString()
-		else return gridRenderEditorTemplate.make(binding).toString()
+		else return gridRenderEditorTemplate.make(binding).toString()*/
+		return null
 	}
 
 	

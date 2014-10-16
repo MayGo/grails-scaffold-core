@@ -20,3 +20,9 @@ log4j = {
            'org.hibernate',
            'net.sf.ehcache.hibernate'
 }
+
+
+//grails.plugin.scaffold.core.exportLocation = "extjs/" //without ending / gives crapp
+//grails.plugin.scaffold.core.overwrite = true
+//grails.plugin.scaffold.core.basenames = ['name']
+//grails.plugin.scaffold.core.folders = ['backend':'', 'frontend':'web-app/extapp/']
