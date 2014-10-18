@@ -34,6 +34,7 @@ import grails.util.Holders
 import java.nio.file.Paths
 import org.springframework.util.FileCopyUtils
 import groovy.util.CharsetToolkit
+import org.codehaus.groovy.grails.validation.DomainClassPropertyComparator;
 
 /**
  * implementation of the generator that generates extjs artifacts (controllers, models, store, views etc.)
@@ -65,7 +66,8 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	Map dynamicFoldersConf = 
 		[
 			"__propertyName__" : {it.propertyName},
-			"__shortName__": {it.shortName}
+			"__shortName__": {it.shortName},
+			"__packageName__": {it.packageName}
 		]
 	
 	
@@ -108,88 +110,44 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 			} 
 			else if(scaffoldType == ScaffoldType.DYNAMIC)
 			{
-				boolean generateForEachDomain = outputFileName.find(~/__.+__/)
+				boolean generateForEachDomain = outputFileName.find(~/__[^__]+__/)
 				if(generateForEachDomain)
 				{
 					
 					for (GrailsDomainClass domainClass : grailsApplication.domainClasses)
 					{
 						String parsedOutputFileName = outputFileName
-						outputFileName.findAll(~/__.+__/).each{
+						outputFileName.findAll(~/__[^__]+__/).each{
 							Closure parse = dynamicFoldersConf[it]
-							parsedOutputFileName = parsedOutputFileName.replace(it,parse(domainClass))
+							println it
+							println parse
+							parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
 						}
-						createDomainFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
+						createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
 					}
 				}
 				else
 				{
-					//createApplicationFileFromTemplate(APPLICATION_DIR, outputFileName, resource)
+					createFileFromTemplate(APPLICATION_DIR, outputFileName, resource, null)
 				}
 			} 
 		}
 	}
 	
 	
-	public void createApplicationFileFromTemplate(String destDir, String fileName, Resource templateFile) throws IOException {
+	public void createFileFromTemplate(String destDir, String fileName, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
 		Assert.hasText(destDir, "Argument [destdir] not specified");
 
 		File destFile = new File(destDir, fileName);
+		log.debug "Writing file $fileName"
+		println "Writing file $fileName"
+		
 		if (canWrite(destFile)) {
 			destFile.getParentFile().mkdirs();
 			BufferedWriter writer = null;
 			try {
 				writer = new BufferedWriter(new FileWriter(destFile));
-				addBindingForApplicationAndCreateFile(writer, templateFile);
-
-				try {
-					writer.flush();
-				} catch (IOException ignored) {}
-			}
-			finally {
-				IOGroovyMethods.closeQuietly(writer);
-			}
-			log.info("Static generated at [" + destFile + "]");
-		}
-	}
-
-	protected void addBindingForApplicationAndCreateFile(Writer out, Resource templateFile) throws IOException {
-		String templateText = getTemplateTextFromResource(templateFile);
-		if (!StringUtils.hasLength(templateText)) {
-			log.error "No lenght for template file."
-			return;
-		}
-		
-		def config = grailsApplication.config
-		
-		Map<String, Object> binding = new HashMap<String, Object>();
-		
-		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""));
-		binding.put("config", config);
-		def domainClasses = grailsApplication.domainClasses
-		binding.put("domainClasses", domainClasses);
-		String appUrl = (config.grails.serverURL)?:APP_URL + grailsApplication.metadata['app.name']
-		binding.put("appUrl", Holders.config.grails.plugin.extjsscaffolding.appUrl?:appUrl)
-
-		generate(templateText, binding, out);
-	}
-	
-	
-	
-	
-	
-	
-	
-	public void createDomainFileFromTemplate(String destDir, String fileName, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
-		Assert.hasText(destDir, "Argument [destdir] not specified");
-
-		File destFile = new File(destDir, fileName);
-		if (canWrite(destFile)) {
-			destFile.getParentFile().mkdirs();
-			BufferedWriter writer = null;
-			try {
-				writer = new BufferedWriter(new FileWriter(destFile));
-				addBindingForDomainAndCreateFile(writer, templateFile, domainClass);
+				addBindingAndCreateFile(writer, templateFile, domainClass);
 
 				try {
 					writer.flush();
@@ -202,33 +160,44 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		}
 	}
 	
-	protected void addBindingForDomainAndCreateFile(Writer out, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
+	protected void addBindingAndCreateFile(Writer out, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
 		String templateText = getTemplateTextFromResource(templateFile);
 		if (!StringUtils.hasLength(templateText)) {
 			log.error "No lenght for template file."
 			return;
 		}
 
-		GrailsDomainClassProperty multiPart = null;
+		/*GrailsDomainClassProperty multiPart = null;
 		for (GrailsDomainClassProperty property : domainClass.getProperties()) {
 			if (property.getType() == Byte[].class || property.getType() == byte[].class) {
 				multiPart = property;
 				break;
 			}
-		}
+		}*/
 
 		def config = grailsApplication.config
 		def domainClasses = grailsApplication.domainClasses
-		String packageName = StringUtils.hasLength(domainClass.getPackageName()) ? "<%@ page import=\"" + domainClass.getFullName() + "\" %>" : "";
-		Map<String, Object> binding = createBinding(domainClass);
-		binding.put("packageName", packageName);
-		binding.put("multiPart", multiPart);
-		binding.put("config", config);
-		binding.put("domainClasses", domainClasses);
-		binding.put("propertyName", getPropertyName(domainClass));
-		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""));
 		String appUrl = (config.grails.serverURL)?:APP_URL + grailsApplication.metadata['app.name']
+		//String packageName = StringUtils.hasLength(domainClass.getPackageName()) ? "<%@ page import=\"" + domainClass.getFullName() + "\" %>" : "";
+		
+		Map<String, Object> binding = new HashMap<String, Object>()
+		binding.put("pluginManager", pluginManager)
+		binding.put("renderEditor", getRenderEditor());
+		binding.put("comparator", DomainClassPropertyComparator.class);
+		binding.put("config", config)
+		binding.put("domainClasses", domainClasses)
+		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""))
 		binding.put("appUrl", Holders.config.grails.plugin.extjsscaffolding.appUrl?:appUrl)
+		if(domainClass)
+		{
+			binding.put("domainClass", domainClass)
+			//binding.put("packageName", packageName)
+			binding.put("packageName", domainClass.getPackageName())
+			//binding.put("multiPart", multiPart)
+			binding.put("className", domainClass.getShortName())
+			binding.put("propertyName", getPropertyName(domainClass))
+			
+		}
 		
 		generate(templateText, binding, out);
 	}
