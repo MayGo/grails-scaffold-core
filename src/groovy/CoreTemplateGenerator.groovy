@@ -67,7 +67,7 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		[
 			"__propertyName__" : {it.propertyName},
 			"__shortName__": {it.shortName},
-			"__packageName__": {it.packageName}
+			"__packageName__": {it.packageName.replace(".", "/")}
 		]
 	
 	
@@ -104,8 +104,8 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 				 File destFile = new File(APPLICATION_DIR, outputFileName);
 				 if (canWrite(destFile))
 				 {
-					// destFile.getParentFile().mkdirs();
-					// FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
+					destFile.getParentFile().mkdirs();
+					FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
 				 }
 			} 
 			else if(scaffoldType == ScaffoldType.DYNAMIC)
@@ -119,8 +119,6 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 						String parsedOutputFileName = outputFileName
 						outputFileName.findAll(~/__[^__]+__/).each{
 							Closure parse = dynamicFoldersConf[it]
-							println it
-							println parse
 							parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
 						}
 						createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
@@ -140,7 +138,6 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 
 		File destFile = new File(destDir, fileName);
 		log.debug "Writing file $fileName"
-		println "Writing file $fileName"
 		
 		if (canWrite(destFile)) {
 			destFile.getParentFile().mkdirs();

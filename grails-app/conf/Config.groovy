@@ -24,5 +24,5 @@ log4j = {
 
 //grails.plugin.scaffold.core.exportLocation = "extjs/" //without ending / gives crapp
 //grails.plugin.scaffold.core.overwrite = true
-//grails.plugin.scaffold.core.basenames = ['name']
+//grails.plugin.scaffold.core.basenames = ['name', 'username', 'authority']
 //grails.plugin.scaffold.core.folders = ['backend':'', 'frontend':'web-app/extapp/']
