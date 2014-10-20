@@ -48,7 +48,7 @@ class CoreTemplateGenerator {
 
 	boolean overwrite = Holders.config.grails.plugin.scaffold.core.overwrite?:true
 	static String DEFAULT_URL = 'http://localhost:8080/'
-	static String APP_URL = Holders.config.grails.plugin.scaffold.core.appUrl
+	static String APP_URL = (Holders.config.grails.plugin.scaffold.core.appUrl)?:''
 	
 	static String APPLICATION_DIR = ""
 	static String SCAFFOLD_DIR = "/src/templates/scaffolding/"
@@ -227,7 +227,7 @@ class CoreTemplateGenerator {
 		binding.put("config", config)
 		binding.put("domainClasses", domainClasses)
 		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""))
-		binding.put("appUrl", APP_URL?:defaultUrl)
+		binding.put("appUrl", (APP_URL)?:defaultUrl)
 		if(domainClass)
 		{
 			binding.put("domainClass", domainClass)
