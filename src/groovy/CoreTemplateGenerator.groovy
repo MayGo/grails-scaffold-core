@@ -14,6 +14,7 @@ import java.util.Set;
 import groovy.text.SimpleTemplateEngine
 import groovy.text.Template
 
+import org.codehaus.groovy.grails.commons.GrailsApplication
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
 import org.codehaus.groovy.grails.plugins.GrailsPluginInfo
@@ -35,6 +36,7 @@ import java.nio.file.Paths
 import org.springframework.util.FileCopyUtils
 import groovy.util.CharsetToolkit
 import org.codehaus.groovy.grails.validation.DomainClassPropertyComparator;
+import grails.build.logging.GrailsConsole;
 
 /**
  * implementation of the generator that generates extjs artifacts (controllers, models, store, views etc.)
@@ -42,22 +44,25 @@ import org.codehaus.groovy.grails.validation.DomainClassPropertyComparator;
  *
  * @author Maigo Erit
  */
-class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
+class CoreTemplateGenerator {
 
-	static EXTJS_DIR = Holders.config.grails.plugin.extjsscaffolding.exportLocation?:"web-app/extapp/"
-	boolean shouldOverwrite = Holders.config.grails.plugin.extjsscaffolding.overwrite?:true
-	static APP_URL = 'http://localhost:8080/'
+	boolean overwrite = Holders.config.grails.plugin.scaffold.core.overwrite?:true
+	static String DEFAULT_URL = 'http://localhost:8080/'
+	static String APP_URL = Holders.config.grails.plugin.scaffold.core.appUrl
 	
-	static APPLICATION_DIR
-	static SCAFFOLD_DIR = "/src/templates/scaffolding/"
-	static SCAFFOLDING_ASSETS_DIR = "assets/"
-	static SCAFFOLDING_APPLICATION_DIR = "application/"
-	static SCAFFOLDING_DOMAIN_DIR = "domain/"
+	static String APPLICATION_DIR = ""
+	static String SCAFFOLD_DIR = "/src/templates/scaffolding/"
+	static String SCAFFOLDING_ASSETS_DIR = "assets/"
+	static String SCAFFOLDING_APPLICATION_DIR = "application/"
+	static String SCAFFOLDING_DOMAIN_DIR = "domain/"
+	static String DYNAMIC_FILE_PATTERN = /__[^__, ^\/]+__/
+	static String PARTIAL_FILE_PATTERN = /__[^__, ^\/]+\.[^\/]+$/
 	
-	protected Template gridRenderEditorTemplate;
-	protected Template detailViewRenderEditorTemplate;
+	protected SimpleTemplateEngine engine = new SimpleTemplateEngine();
 	
 	TemplatesLocator templatesLocator
+	GrailsApplication grailsApplication
+	GrailsPluginManager pluginManager
 	
 	enum ScaffoldType{
 		DYNAMIC,
@@ -72,12 +77,12 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 	
 	
 	CoreTemplateGenerator(ClassLoader classLoader) {
-		super(classLoader)
-		setOverwrite(shouldOverwrite)
+		engine = new SimpleTemplateEngine(classLoader);
 	}
 	
 	public void generateScaffold(String applicationDir) throws IOException
 	{
+		
 		Assert.hasText(applicationDir, "Argument [applicationDir] not specified");
 		APPLICATION_DIR = applicationDir
 		String templatesDir = APPLICATION_DIR + SCAFFOLD_DIR
@@ -110,19 +115,24 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 			} 
 			else if(scaffoldType == ScaffoldType.DYNAMIC)
 			{
-				boolean generateForEachDomain = outputFileName.find(~/__[^__]+__/)
+				boolean generateForEachDomain = outputFileName.find(~DYNAMIC_FILE_PATTERN)
+				boolean generatePartialFile = outputFileName.find(~PARTIAL_FILE_PATTERN)
 				if(generateForEachDomain)
 				{
-					
 					for (GrailsDomainClass domainClass : grailsApplication.domainClasses)
 					{
 						String parsedOutputFileName = outputFileName
-						outputFileName.findAll(~/__[^__]+__/).each{
+						outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each{
 							Closure parse = dynamicFoldersConf[it]
 							parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
 						}
 						createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
 					}
+				}
+				else if(generatePartialFile)
+				{
+					String parsedOutputFileName = outputFileName.replace("__", "")
+					createFileFromPartial(APPLICATION_DIR, parsedOutputFileName, resource)
 				}
 				else
 				{
@@ -157,6 +167,41 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		}
 	}
 	
+	public void createFileFromPartial(String destDir, String fileName, Resource templateFile) throws IOException {
+		Assert.hasText(destDir, "Argument [destdir] not specified");
+
+		File destFile = new File(destDir, fileName);
+		log.debug "Writing file $fileName"
+		
+		if (canWrite(destFile)) {
+			GroovyShell groovyShell = new GroovyShell()
+			String tmpl = templateFile.file.text.trim()
+			if(tmpl.startsWith("[") && tmpl.endsWith("]")){
+				Map regExClosures = groovyShell.evaluate(tmpl)
+				regExClosures.each{regEx, closure->
+					closure.delegate = this
+					String linesToAdd = closure(destFile)
+					if(linesToAdd) {
+						CharsetToolkit toolkit = new CharsetToolkit(destFile);
+						// guess the encoding
+						Charset guessedCharset = toolkit.getCharset();
+						destFile.write(destFile.getText(guessedCharset.toString()).replaceFirst(regEx){
+							it[0] + "\n\n" + linesToAdd
+						}, guessedCharset.toString())
+					}
+				}
+				log.info("Partial file appended to [" + destFile + "]");
+			} else {
+				log.error "This is not a partial file. Map is missing from file"
+			}
+			
+			
+			
+		
+			
+		}
+	}
+	
 	protected void addBindingAndCreateFile(Writer out, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
 		String templateText = getTemplateTextFromResource(templateFile);
 		if (!StringUtils.hasLength(templateText)) {
@@ -174,30 +219,59 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 
 		def config = grailsApplication.config
 		def domainClasses = grailsApplication.domainClasses
-		String appUrl = (config.grails.serverURL)?:APP_URL + grailsApplication.metadata['app.name']
-		//String packageName = StringUtils.hasLength(domainClass.getPackageName()) ? "<%@ page import=\"" + domainClass.getFullName() + "\" %>" : "";
+		String defaultUrl = (config.grails.serverURL)?:DEFAULT_URL + grailsApplication.metadata['app.name']
 		
 		Map<String, Object> binding = new HashMap<String, Object>()
 		binding.put("pluginManager", pluginManager)
-		binding.put("renderEditor", getRenderEditor());
 		binding.put("comparator", DomainClassPropertyComparator.class);
 		binding.put("config", config)
 		binding.put("domainClasses", domainClasses)
 		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""))
-		binding.put("appUrl", Holders.config.grails.plugin.extjsscaffolding.appUrl?:appUrl)
+		binding.put("appUrl", APP_URL?:defaultUrl)
 		if(domainClass)
 		{
 			binding.put("domainClass", domainClass)
-			//binding.put("packageName", packageName)
-			binding.put("packageName", domainClass.getPackageName())
+			binding.put("packageName", domainClass.packageName)
 			//binding.put("multiPart", multiPart)
-			binding.put("className", domainClass.getShortName())
-			binding.put("propertyName", getPropertyName(domainClass))
+			binding.put("className", domainClass.shortName)
+			binding.put("propertyName", domainClass.propertyName)
 			
 		}
 		
 		generate(templateText, binding, out);
 	}
+	
+	protected void generate(String templateText, Map<String, Object> binding, Writer out) {
+		try {
+			engine.createTemplate(templateText).make(binding).writeTo(out);
+		}
+		catch (ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	protected boolean canWrite(File testFile) {
+		if (overwrite || !testFile.exists()) {
+			return true;
+		}
+
+		try {
+			String relative = testFile.absolutePath;
+			String response = GrailsConsole.getInstance().userInput("File " + relative + " already exists. Overwrite?", ["y", "n", "a"])
+			overwrite = overwrite || "a".equals(response);
+			return overwrite || "y".equals(response);
+		}
+		catch (Exception e) {
+			// failure to read from standard in means we're probably running from an automation tool like a build server
+			return true;
+		}
+	}
+
+
+	
 	
 	private boolean templatesExists(String templatesDir)
 	{
@@ -224,137 +298,10 @@ class CoreTemplateGenerator extends AbstractGrailsTemplateGenerator {
 		return resources
 	}
 	
-	
-
-	def renderEditor = { GrailsDomainClassProperty property, boolean isDetailView = false ->
-		/*def domainClass = property.domainClass
-		def cp
-		boolean hasHibernate = pluginManager?.hasGrailsPlugin('hibernate') || pluginManager?.hasGrailsPlugin('hibernate4')
-		if (hasHibernate) {
-			cp = domainClass.constrainedProperties[property.name]
-		}
-		File pluginDir = templatesLocator.getPluginDir();
-		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
-		try {
-			String templatesDir = pluginDir.path + SCAFFOLD_DIR
-			//TODO: Add something more dynamic 
-			Resource r1 = resolver.getResources("file:" + templatesDir + "gridEditor.template")[0];
-			Resource r2 = resolver.getResources("file:" + templatesDir + "detailViewEditor.template")[0];
-		
-			if (!gridRenderEditorTemplate) {
-				// create template once for performance
-				gridRenderEditorTemplate = engine.createTemplate(getTemplateTextFromResource(r1))
-			}
-			if (!detailViewRenderEditorTemplate) {
-				// create template once for performance
-				detailViewRenderEditorTemplate = engine.createTemplate(getTemplateTextFromResource(r2))
-			}
-		} catch (Exception e) {
-			// ignore
-			log.error("Error locating assets from " + pluginDir + ": " + e.getMessage(), e);
-		}
-
-		def binding = [
-			pluginManager: pluginManager,
-			property: property,
-			domainClass: domainClass,
-			cp: cp,
-			domainInstance:getPropertyName(domainClass)]
-		if(isDetailView) return detailViewRenderEditorTemplate.make(binding).toString()
-		else return gridRenderEditorTemplate.make(binding).toString()*/
-		return null
-	}
-
-	
 	protected String getTemplateTextFromResource(Resource templateFile) throws IOException {
 		InputStream inputStream = templateFile.getInputStream();
 		
 		return inputStream == null ? null : IOGroovyMethods.getText(inputStream);
 	}
 	
-	
-	public void addAnnotation(GrailsDomainClass domainClass) throws IOException {
-
-		if (domainClass == null) {
-			return;
-		}
-
-		String fullName = domainClass.getFullName();
-		
-		String pathName = fullName.replace(".", File.separator)
-		String domainClassFilePath = "grails-app/domain/" + pathName+ ".groovy"
-		
-		File destFile = new File(domainClassFilePath);
-		if (canWrite(destFile) && !destFile.text.contains("@Resource")) {
-
-			CharsetToolkit toolkit = new CharsetToolkit(destFile);
-			// guess the encoding
-			Charset guessedCharset = toolkit.getCharset();
-			
-			//lowercase plural domain name as url
-			String restName = domainClass.getShortName().toLowerCase() + "s"
-			
-			String linesToAdd = "import grails.rest.Resource\n\n"
-			linesToAdd += "@Resource(uri = '/$restName', formats = ['json'], superClass = extjsScaffoldingPlugin.CustomRestfulController)\n"
-			
-			//Add annotation line without modifying file encoding
-			destFile.write(destFile.getText(guessedCharset.toString()).replaceFirst(/(.*class .+\{)/){
-				linesToAdd + it[0]
-			}, guessedCharset.toString())
-						
-			log.info("Annotation added to [" + destFile + "]");
-		}
-	}
-	public void addUrlMappings() throws IOException {
-		String classFilePath = "grails-app/conf/UrlMappings.groovy"
-		
-		File destFile = new File(classFilePath);
-		if (canWrite(destFile)){
-			def domainClasses = grailsApplication.domainClasses
-			String linesToAdd = ""
-			domainClasses.each{domainClass->
-				String shortName = domainClass.getShortName();
-				String shortNameLower = shortName.toLowerCase();
-				String line = "'/${shortNameLower}s'(resources:'$shortName')"
-
-				if(!destFile.text.contains(line)) {
-					linesToAdd += "\t\t" + line +"\n"
-				}
-			}
-			
-			//Write lines to file
-			if(linesToAdd) {
-				CharsetToolkit toolkit = new CharsetToolkit(destFile);
-				// guess the encoding
-				Charset guessedCharset = toolkit.getCharset();
-				destFile.write(destFile.getText(guessedCharset.toString()).replaceFirst(/(.*mappings\s*\=\s*\{)/){ 
-					it[0] + "\n\n" + linesToAdd 
-				}, guessedCharset.toString())
-							
-			}
-		}
-	}
-	
-	
-	@Override
-	public void generateViews(GrailsDomainClass domainClass, String destDir) throws IOException {
-		
-	}
-
-	@Override
-	public void generateView(GrailsDomainClass domainClass, String viewName, Writer out) throws IOException {
-	}
-
-	@Override
-	public void generateView(GrailsDomainClass domainClass, String viewName, String destDir) throws IOException {
-	
-	}
-	
-
-
-	@Override
-	public void generateAsyncController(GrailsDomainClass domainClass, String destDir) throws IOException {
-
-	}
-
 }

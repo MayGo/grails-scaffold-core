@@ -1,3 +1,5 @@
+import grails.plugin.scaffold.core.ConfigUtility
+
 class ScaffoldCoreGrailsPlugin {
     // the plugin version
     def version = "0.1"
@@ -41,6 +43,7 @@ Brief summary/description of the plugin.
     }
 
     def doWithSpring = {
+		ConfigUtility.mergeDefaultConfig(application, 'DefaultConfig')
 		templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator)
     }
 

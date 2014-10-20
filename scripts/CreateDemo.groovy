@@ -2,13 +2,7 @@ includeTargets << new File(scaffoldCorePluginDir, 'scripts/_ScaffoldGenerate.gro
 
 target( createDemo:'Generate demo application (all artefacts)' ) {
   	depends(checkVersion, parseArguments, packageApp)
-
-	generateDomain = true
-	generateAssets = true
-	generateApplication = true
-	addAnnotations = false
-	generateControllers = true
-
+	  
 	scaffoldGenerate()
 }
 
