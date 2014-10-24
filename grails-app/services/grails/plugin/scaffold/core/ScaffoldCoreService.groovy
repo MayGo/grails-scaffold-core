@@ -6,7 +6,7 @@ import grails.converters.JSON
 
 class ScaffoldCoreService{
 
-	static Map parseParamsAndRetrieveListAndCount(def resource, Map param){
+	static List parseParamsAndRetrieveListAndCount(def resource, Map param){
 
 		//Collect sort param from extjs 'sort' json string
 		List sortList = []
@@ -126,6 +126,6 @@ class ScaffoldCoreService{
 			}
 		}
 
-		return [list: results, total: results.totalCount]
+		return results
 	}
 }
