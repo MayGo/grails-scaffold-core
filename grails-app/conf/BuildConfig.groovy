@@ -45,6 +45,5 @@ grails.project.dependency.resolution = {
             export = false
         }
 	    compile ':plugin-config:0.2.0'
-		compile ':scaffolding:2.1.2'
     }
 }

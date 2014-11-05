@@ -3,7 +3,7 @@ includeTargets << grailsScript("_GrailsCreateArtifacts")
 
 
 target(scaffoldGenerate: "Generates controllers and extjs views for all domain classes.") {
-	depends(configureProxy, packageApp, classpath, loadApp, configureApp)
+	depends(configureProxy, packageApp, classpath)
 
 	def domainClasses = grailsApp.domainClasses
 

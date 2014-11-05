@@ -51,10 +51,8 @@ class CoreTemplateGenerator {
 	static String APP_URL = (Holders.config.grails.plugin.scaffold.core.appUrl)?:''
 	
 	static String APPLICATION_DIR = ""
-	static String SCAFFOLD_DIR = "/src/templates/scaffolding/"
-	static String SCAFFOLDING_ASSETS_DIR = "assets/"
-	static String SCAFFOLDING_APPLICATION_DIR = "application/"
-	static String SCAFFOLDING_DOMAIN_DIR = "domain/"
+	static String SCAFFOLD_DIR = "/src/templates/scaffold/"
+
 	static String DYNAMIC_FILE_PATTERN = /__[^__, ^\/]+__/
 	static String PARTIAL_FILE_PATTERN = /__[^__, ^\/]+\.[^\/]+$/
 	
@@ -95,6 +93,11 @@ class CoreTemplateGenerator {
 		for (Resource resource : gatherResources(templatesDir))
 		{
 			Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(resource.file.path));
+			if(!resource.isReadable()) 
+			{
+				 log.info "Resource is not readable: $relativeFilePath"
+				 continue
+			}
 			
 			Path fileRealPath = relativeFilePath.subpath(2, relativeFilePath.nameCount)
 			
@@ -287,7 +290,7 @@ class CoreTemplateGenerator {
 		Resource templatesResource = new FileSystemResource(templatesDir );
 		if (templatesResource.exists()) {
 			try {
-				resources = resolver.getResources("file:" + templatesDir + "**/*.*");
+				resources = resolver.getResources("file:" + templatesDir + "**/*");
 			}catch (Exception e) {
 				log.error("Error while loading assets from " + templatesDir, e);
 			}

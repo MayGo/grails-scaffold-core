@@ -13,6 +13,11 @@ Core functionality for scaffolding own tempates or templates provided by plugin.
 '''
     // URL to the plugin's documentation
     def documentation = "http://grails.org/plugin/scaffold-core"
+	
+	
+	def watchedResources = [
+		"file:./plugins/*/src/templates/scaffold/**",
+	]
 
     // Extra (optional) plugin metadata
 
@@ -26,8 +31,13 @@ Core functionality for scaffolding own tempates or templates provided by plugin.
 
 
     def doWithSpring = {
-		ConfigUtility.mergeDefaultConfig(application, 'DefaultConfig')
-		templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator)
+		ConfigUtility.mergeDefaultConfig(application, 'ScaffoldCoreDefaultConfig')
+		templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator, "scaffold-core")
     }
+	
+	def onChange = { event ->
+		println event.source.name
+		//configureScaffolding(event.ctx, event.application)
+	}
 
 }
