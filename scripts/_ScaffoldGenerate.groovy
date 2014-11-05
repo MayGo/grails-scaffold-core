@@ -19,9 +19,8 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	}
 
 	def DefaultGrailsTemplateGenerator = classLoader.loadClass('CoreTemplateGenerator')
-	def templateGenerator = DefaultGrailsTemplateGenerator.newInstance(classLoader)
+	def templateGenerator = DefaultGrailsTemplateGenerator.newInstance(classLoader, appCtx.getBean('templatesLocator'))
 	
-	templateGenerator.templatesLocator = appCtx.getBean('templatesLocator')
 	templateGenerator.grailsApplication = grailsApp
 	templateGenerator.pluginManager = pluginManager
 	

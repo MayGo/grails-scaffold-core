@@ -20,8 +20,6 @@ import org.codehaus.groovy.grails.commons.GrailsDomainClassProperty
 import org.codehaus.groovy.grails.plugins.GrailsPluginInfo
 import org.codehaus.groovy.grails.plugins.GrailsPluginManager
 import org.codehaus.groovy.grails.plugins.GrailsPluginUtils
-import org.codehaus.groovy.grails.scaffolding.AbstractGrailsTemplateGenerator
-import org.codehaus.groovy.grails.scaffolding.AbstractGrailsTemplateGenerator.GrailsControllerType;
 import org.springframework.core.io.FileSystemResource
 import org.springframework.core.io.Resource
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -52,13 +50,13 @@ class CoreTemplateGenerator {
 	
 	static String APPLICATION_DIR = ""
 	static String SCAFFOLD_DIR = "/src/templates/scaffold/"
+	static String TEMPLATES_DIR = ""
 
 	static String DYNAMIC_FILE_PATTERN = /__[^__, ^\/]+__/
 	static String PARTIAL_FILE_PATTERN = /__[^__, ^\/]+\.[^\/]+$/
 	
 	protected SimpleTemplateEngine engine = new SimpleTemplateEngine();
 	
-	TemplatesLocator templatesLocator
 	GrailsApplication grailsApplication
 	GrailsPluginManager pluginManager
 	
@@ -74,74 +72,80 @@ class CoreTemplateGenerator {
 		]
 	
 	
-	CoreTemplateGenerator(ClassLoader classLoader) {
+	CoreTemplateGenerator(ClassLoader classLoader, TemplatesLocator templatesLocator) {
 		engine = new SimpleTemplateEngine(classLoader);
+		APPLICATION_DIR = new File("").absolutePath
+		TEMPLATES_DIR = APPLICATION_DIR + SCAFFOLD_DIR
+		//Check if has templates in application, if not use plugins templates
+		if(!templatesExists(TEMPLATES_DIR)) TEMPLATES_DIR = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
 	}
 	
 	public void generateScaffold(String applicationDir) throws IOException
 	{
 		
 		Assert.hasText(applicationDir, "Argument [applicationDir] not specified");
-		APPLICATION_DIR = applicationDir
-		String templatesDir = APPLICATION_DIR + SCAFFOLD_DIR
-		if(!templatesExists(templatesDir)) templatesDir = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
-		log.info "Using templates dir: $templatesDir"
+		
+		println "Using templates dir: $TEMPLATES_DIR"
+		
+		for (Resource resource : gatherResources(TEMPLATES_DIR))
+		{
+			generateFile(resource)
+		}
+	}
+	
+	public void generateFile(Resource resource){
+		Path relativeFilePath = Paths.get(TEMPLATES_DIR).relativize(Paths.get(resource.file.path));
+		if(!resource.isReadable())
+		{
+			 log.debug "Resource is not readable: $relativeFilePath"
+			 return
+		}
+		
+		Path fileRealPath = relativeFilePath.subpath(2, relativeFilePath.nameCount)
 		
 		Map scaffoldDirs = Holders.config.grails.plugin.scaffold.core.folders
 		log.info "Using scaffold dirs from config:$scaffoldDirs"
+		// locate files output directory
+		String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
 		
-		for (Resource resource : gatherResources(templatesDir))
+		if(!scaffoldDirs.containsKey(scaffoldDir)) log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
+		String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
+	
+		ScaffoldType scaffoldType = relativeFilePath.subpath(1, 2).toString().toUpperCase() as ScaffoldType
+		if(scaffoldType == ScaffoldType.STATIC)
 		{
-			Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(resource.file.path));
-			if(!resource.isReadable()) 
+			 File destFile = new File(APPLICATION_DIR, outputFileName);
+			 if (canWrite(destFile))
+			 {
+				destFile.getParentFile().mkdirs();
+				FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
+			 }
+		}
+		else if(scaffoldType == ScaffoldType.DYNAMIC)
+		{
+			boolean generateForEachDomain = outputFileName.find(~DYNAMIC_FILE_PATTERN)
+			boolean generatePartialFile = outputFileName.find(~PARTIAL_FILE_PATTERN)
+			if(generateForEachDomain)
 			{
-				 log.info "Resource is not readable: $relativeFilePath"
-				 continue
-			}
-			
-			Path fileRealPath = relativeFilePath.subpath(2, relativeFilePath.nameCount)
-			
-			// locate files output directory
-			String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
-			if(!scaffoldDirs.containsKey(scaffoldDir)) log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
-			String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
-		
-			ScaffoldType scaffoldType = relativeFilePath.subpath(1, 2).toString().toUpperCase() as ScaffoldType
-			if(scaffoldType == ScaffoldType.STATIC)
-			{
-				 File destFile = new File(APPLICATION_DIR, outputFileName);
-				 if (canWrite(destFile))
-				 {
-					destFile.getParentFile().mkdirs();
-					FileCopyUtils.copy(resource.inputStream, new FileOutputStream(destFile))
-				 }
-			} 
-			else if(scaffoldType == ScaffoldType.DYNAMIC)
-			{
-				boolean generateForEachDomain = outputFileName.find(~DYNAMIC_FILE_PATTERN)
-				boolean generatePartialFile = outputFileName.find(~PARTIAL_FILE_PATTERN)
-				if(generateForEachDomain)
+				for (GrailsDomainClass domainClass : grailsApplication.domainClasses)
 				{
-					for (GrailsDomainClass domainClass : grailsApplication.domainClasses)
-					{
-						String parsedOutputFileName = outputFileName
-						outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each{
-							Closure parse = dynamicFoldersConf[it]
-							parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
-						}
-						createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
+					String parsedOutputFileName = outputFileName
+					outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each{
+						Closure parse = dynamicFoldersConf[it]
+						parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
 					}
+					createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
 				}
-				else if(generatePartialFile)
-				{
-					String parsedOutputFileName = outputFileName.replace("__", "")
-					createFileFromPartial(APPLICATION_DIR, parsedOutputFileName, resource)
-				}
-				else
-				{
-					createFileFromTemplate(APPLICATION_DIR, outputFileName, resource, null)
-				}
-			} 
+			}
+			else if(generatePartialFile)
+			{
+				String parsedOutputFileName = outputFileName.replace("__", "")
+				createFileFromPartial(APPLICATION_DIR, parsedOutputFileName, resource)
+			}
+			else
+			{
+				createFileFromTemplate(APPLICATION_DIR, outputFileName, resource, null)
+			}
 		}
 	}
 	
@@ -166,7 +170,7 @@ class CoreTemplateGenerator {
 			finally {
 				IOGroovyMethods.closeQuietly(writer);
 			}
-			log.info("Static generated at [" + destFile + "]");
+			println("Static generated at [" + destFile + "]");
 		}
 	}
 	
@@ -193,7 +197,7 @@ class CoreTemplateGenerator {
 						}, guessedCharset.toString())
 					}
 				}
-				log.info("Partial file appended to [" + destFile + "]");
+				println("Partial file appended to [" + destFile + "]");
 			} else {
 				log.error "This is not a partial file. Map is missing from file"
 			}
@@ -295,7 +299,7 @@ class CoreTemplateGenerator {
 				log.error("Error while loading assets from " + templatesDir, e);
 			}
 		}else{
-			log.info "Templates dir $templatesDir does not exists."
+			println "Templates dir $templatesDir does not exists."
 		}
 				
 		return resources
