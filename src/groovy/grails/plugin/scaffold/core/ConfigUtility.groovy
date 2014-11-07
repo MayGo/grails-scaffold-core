@@ -22,7 +22,7 @@ class ConfigUtility {
 		if (secondary == null) {
 			config.putAll(application.config);
 		} else {
-			config.putAll(application.config.merge(secondary));
+			config.putAll(secondary.merge(application.config));
 		}
 		application.config = config
 	}
