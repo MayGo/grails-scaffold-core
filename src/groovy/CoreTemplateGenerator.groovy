@@ -81,13 +81,10 @@ class CoreTemplateGenerator {
 	}
 	
 	public void generateScaffold(String applicationDir) throws IOException
-	{
+	{	
+		log.info "Using templates dir: ${TEMPLATES_DIR+applicationDir}"
 		
-		Assert.hasText(applicationDir, "Argument [applicationDir] not specified");
-		
-		println "Using templates dir: $TEMPLATES_DIR"
-		
-		for (Resource resource : gatherResources(TEMPLATES_DIR))
+		for (Resource resource : gatherResources(TEMPLATES_DIR + applicationDir))
 		{
 			generateFile(resource)
 		}
@@ -154,9 +151,9 @@ class CoreTemplateGenerator {
 		Assert.hasText(destDir, "Argument [destdir] not specified");
 
 		File destFile = new File(destDir, fileName);
-		log.debug "Writing file $fileName"
 		
 		if (canWrite(destFile)) {
+			log.info "Writing file $fileName"
 			destFile.getParentFile().mkdirs();
 			BufferedWriter writer = null;
 			try {
@@ -170,7 +167,6 @@ class CoreTemplateGenerator {
 			finally {
 				IOGroovyMethods.closeQuietly(writer);
 			}
-			println("Static generated at [" + destFile + "]");
 		}
 	}
 	
@@ -178,9 +174,9 @@ class CoreTemplateGenerator {
 		Assert.hasText(destDir, "Argument [destdir] not specified");
 
 		File destFile = new File(destDir, fileName);
-		log.debug "Writing file $fileName"
 		
 		if (canWrite(destFile)) {
+			log.info "Writing file from partial $fileName"
 			GroovyShell groovyShell = new GroovyShell()
 			String tmpl = templateFile.file.text.trim()
 			if(tmpl.startsWith("[") && tmpl.endsWith("]")){
@@ -197,7 +193,7 @@ class CoreTemplateGenerator {
 						}, guessedCharset.toString())
 					}
 				}
-				println("Partial file appended to [" + destFile + "]");
+				log.info "Partial file appended to $destFile"
 			} else {
 				log.error "This is not a partial file. Map is missing from file"
 			}
@@ -288,6 +284,10 @@ class CoreTemplateGenerator {
 	
 	private Resource[] gatherResources(String templatesDir)
 	{
+		// Add trailing / to folder path if does not exsits
+		if(templatesDir.charAt(templatesDir.length()-1) != File.separatorChar){
+			templatesDir += File.separator;
+		}
 		Resource[] resources = []
 		
 		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
@@ -299,7 +299,7 @@ class CoreTemplateGenerator {
 				log.error("Error while loading assets from " + templatesDir, e);
 			}
 		}else{
-			println "Templates dir $templatesDir does not exists."
+			log.info "Templates dir $templatesDir does not exists."
 		}
 				
 		return resources

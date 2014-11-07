@@ -1,6 +1,7 @@
 includeTargets << grailsScript("_GrailsBootstrap")
 includeTargets << grailsScript("_GrailsCreateArtifacts")
 
+generateTemplatesSubdir=""
 
 target(scaffoldGenerate: "Generates controllers and extjs views for all domain classes.") {
 	depends(configureProxy, packageApp, classpath)
@@ -24,7 +25,7 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	templateGenerator.grailsApplication = grailsApp
 	templateGenerator.pluginManager = pluginManager
 	
-	event("StatusUpdate", ["Generating application files from templates."])
-	templateGenerator.generateScaffold(basedir)
+	event("StatusUpdate", ["Generating application files from templates: $generateTemplatesSubdir"])
+	templateGenerator.generateScaffold(generateTemplatesSubdir)
 	event("StatusFinal", ["Finished generation of application files from templates."])
 }
