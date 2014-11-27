@@ -1,6 +1,9 @@
 package grails.plugin.scaffold.core
 
+import java.util.List;
+
 import grails.persistence.Event
+
 import org.codehaus.groovy.grails.commons.DomainClassArtefactHandler
 import org.codehaus.groovy.grails.commons.GrailsDomainClass
 import org.codehaus.groovy.grails.commons.GrailsClass
@@ -83,5 +86,31 @@ class ScaffoldingHelper {
 			assType = "0";
 		}
 		return assType
+	}
+	
+	static Map getDomainClassDisplayNames(domainClass, config, property = null){
+		Map useDisplaynames = [:]
+		List defaultDisplayNames = config.grails.plugin.scaffold.core.defaultDisplayNames
+		domainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{
+			useDisplaynames[it.name]=null
+		}
+			
+		Map displayNames = config.grails.plugin.scaffold.core.displayNames
+		if(displayNames.containsKey(domainClass.shortName)){
+			useDisplaynames << displayNames[domainClass.shortName]
+		}
+		//use config in properties context: e.g: if have in config person.division=description then display it not default 'name'
+		if(property){
+			if(useDisplaynames.containsKey(property.name)){
+				return useDisplaynames[property.name]
+			}else{
+				def refDomainClass = property.getReferencedDomainClass()
+				refDomainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{
+					useDisplaynames[it.name]=null
+				}
+				return useDisplaynames
+			}
+		}
+		return useDisplaynames
 	}
 }

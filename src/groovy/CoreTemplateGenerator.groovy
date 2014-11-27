@@ -97,15 +97,17 @@ class CoreTemplateGenerator {
 			 log.debug "Resource is not readable: $relativeFilePath"
 			 return
 		}
-		
-		Path fileRealPath = relativeFilePath.subpath(2, relativeFilePath.nameCount)
+		Path fileRealPath = (relativeFilePath.nameCount>2)?relativeFilePath.subpath(2, relativeFilePath.nameCount):relativeFilePath
 		
 		Map scaffoldDirs = Holders.config.grails.plugin.scaffold.core.folders
 		log.info "Using scaffold dirs from config:$scaffoldDirs"
 		// locate files output directory
 		String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
 		
-		if(!scaffoldDirs.containsKey(scaffoldDir)) log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
+		if(!scaffoldDirs.containsKey(scaffoldDir)){
+			log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
+			return
+		}
 		String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
 	
 		ScaffoldType scaffoldType = relativeFilePath.subpath(1, 2).toString().toUpperCase() as ScaffoldType
