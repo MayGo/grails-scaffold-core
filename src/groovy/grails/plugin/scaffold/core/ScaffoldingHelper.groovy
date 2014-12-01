@@ -1,6 +1,7 @@
 package grails.plugin.scaffold.core
 
 import java.util.List;
+import java.util.Map;
 
 import grails.persistence.Event
 
@@ -89,28 +90,31 @@ class ScaffoldingHelper {
 	}
 	
 	static Map getDomainClassDisplayNames(domainClass, config, property = null){
-		Map useDisplaynames = [:]
-		List defaultDisplayNames = config.grails.plugin.scaffold.core.defaultDisplayNames
-		domainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{
-			useDisplaynames[it.name]=null
-		}
-			
-		Map displayNames = config.grails.plugin.scaffold.core.displayNames
-		if(displayNames.containsKey(domainClass.shortName)){
-			useDisplaynames << displayNames[domainClass.shortName]
-		}
-		//use config in properties context: e.g: if have in config person.division=description then display it not default 'name'
-		if(property){
-			if(useDisplaynames.containsKey(property.name)){
-				return useDisplaynames[property.name]
+		
+		Map displayNames = { [:].withDefault{ owner.call() } }()
+		
+		displayNames = config.grails.plugin.scaffold.core.displayNames
+		
+		boolean returnDefaults = (!property || !displayNames[domainClass.name]?.containsKey(property.name) )
+		
+		if(returnDefaults){
+			List defaultDisplayNames = config.grails.plugin.scaffold.core.defaultDisplayNames
+			Map names = { [:].withDefault{ owner.call() } }()
+			def usedDomainClass = (property?.getReferencedDomainClass())?:domainClass
+			Map firstLevelMap = displayNames[usedDomainClass.shortName]?.findAll{k,v->!v}
+			if(firstLevelMap){
+				names += firstLevelMap
 			}else{
-				def refDomainClass = property.getReferencedDomainClass()
-				refDomainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{
-					useDisplaynames[it.name]=null
-				}
-				return useDisplaynames
+				usedDomainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{names[it.name]}
 			}
+			return names
+		}else{
+			//Make list to map
+			
+			if(displayNames[domainClass.name][property.name] instanceof List){
+				displayNames[domainClass.name][property.name] = displayNames[domainClass.name][property.name].collectEntries {[(it): null]}
+			}
+			return displayNames[domainClass.name][property.name]
 		}
-		return useDisplaynames
 	}
 }

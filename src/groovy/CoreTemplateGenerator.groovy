@@ -75,9 +75,12 @@ class CoreTemplateGenerator {
 	CoreTemplateGenerator(ClassLoader classLoader, TemplatesLocator templatesLocator) {
 		engine = new SimpleTemplateEngine(classLoader);
 		APPLICATION_DIR = new File("").absolutePath
-		TEMPLATES_DIR = APPLICATION_DIR + SCAFFOLD_DIR
-		//Check if has templates in application, if not use plugins templates
-		if(!templatesExists(TEMPLATES_DIR)) TEMPLATES_DIR = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
+		
+		TEMPLATES_DIR = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
+		//Check if has templates in plugin(core plugin has none), if has not use application templates
+		if(!templatesExists(TEMPLATES_DIR)) TEMPLATES_DIR = APPLICATION_DIR + SCAFFOLD_DIR
+		
+		
 	}
 	
 	public void generateScaffold(String applicationDir) throws IOException

@@ -20,12 +20,18 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	}
 
 	def DefaultGrailsTemplateGenerator = classLoader.loadClass('CoreTemplateGenerator')
-	def templateGenerator = DefaultGrailsTemplateGenerator.newInstance(classLoader, appCtx.getBean('templatesLocator'))
-	
-	templateGenerator.grailsApplication = grailsApp
-	templateGenerator.pluginManager = pluginManager
-	
-	event("StatusUpdate", ["Generating application files from templates: $generateTemplatesSubdir"])
-	templateGenerator.generateScaffold(generateTemplatesSubdir)
-	event("StatusFinal", ["Finished generation of application files from templates."])
+
+	Map templatesLocators = appCtx.getBeansOfType(classLoader.loadClass("grails.plugin.scaffold.core.TemplatesLocator"));
+	templatesLocators.collect{it.value}.sort{it.order}.each{templatesLocator->
+		def templateGenerator = DefaultGrailsTemplateGenerator.newInstance(classLoader, templatesLocator)
+
+		templateGenerator.grailsApplication = grailsApp
+		templateGenerator.pluginManager = pluginManager
+
+		event("StatusUpdate", [
+			"Generating application files from plugin ${templatesLocator.getPluginDir()} templates: $generateTemplatesSubdir"
+		])
+		templateGenerator.generateScaffold(generateTemplatesSubdir)
+		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
+	}
 }
