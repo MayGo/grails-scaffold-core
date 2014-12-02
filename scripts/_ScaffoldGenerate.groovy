@@ -19,19 +19,21 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 		return
 	}
 
-	def DefaultGrailsTemplateGenerator = classLoader.loadClass('CoreTemplateGenerator')
-
+	def templateGenerator = appCtx.getBean('templateGenerator')
+	
 	Map templatesLocators = appCtx.getBeansOfType(classLoader.loadClass("grails.plugin.scaffold.core.TemplatesLocator"));
-	templatesLocators.collect{it.value}.sort{it.order}.each{templatesLocator->
-		def templateGenerator = DefaultGrailsTemplateGenerator.newInstance(classLoader, templatesLocator)
-
-		templateGenerator.grailsApplication = grailsApp
-		templateGenerator.pluginManager = pluginManager
+	println templatesLocators
+	/*templatesLocators.collect{it.value}.sort{it.order}.each{templatesLocator->
 
 		event("StatusUpdate", [
 			"Generating application files from plugin ${templatesLocator.getPluginDir()} templates: $generateTemplatesSubdir"
 		])
-		templateGenerator.generateScaffold(generateTemplatesSubdir)
+		
+		String templatesDir = templatesLocator.getPluginDir().path + templateGenerator.SCAFFOLD_DIR
+		//Check if has templates in plugin(core plugin has none), if has not use application templates
+		if(!templateGenerator.templatesExists(templatesDir)) templatesDir = templateGenerator.APPLICATION_DIR + templateGenerator.SCAFFOLD_DIR
+		
+		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir)
 		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
-	}
+	}*/
 }

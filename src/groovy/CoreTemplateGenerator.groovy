@@ -35,7 +35,7 @@ import org.springframework.util.FileCopyUtils
 import groovy.util.CharsetToolkit
 import org.codehaus.groovy.grails.validation.DomainClassPropertyComparator;
 import grails.build.logging.GrailsConsole;
-
+import org.apache.commons.io.FilenameUtils
 /**
  * implementation of the generator that generates extjs artifacts (controllers, models, store, views etc.)
  * from the domain model.
@@ -50,7 +50,6 @@ class CoreTemplateGenerator {
 	
 	static String APPLICATION_DIR = ""
 	static String SCAFFOLD_DIR = "/src/templates/scaffold/"
-	static String TEMPLATES_DIR = ""
 
 	static String DYNAMIC_FILE_PATTERN = /__[^__, ^\/]+__/
 	static String PARTIAL_FILE_PATTERN = /__[^__, ^\/]+\.[^\/]+$/
@@ -76,25 +75,28 @@ class CoreTemplateGenerator {
 		engine = new SimpleTemplateEngine(classLoader);
 		APPLICATION_DIR = new File("").absolutePath
 		
-		TEMPLATES_DIR = templatesLocator.getPluginDir().path + SCAFFOLD_DIR
-		//Check if has templates in plugin(core plugin has none), if has not use application templates
-		if(!templatesExists(TEMPLATES_DIR)) TEMPLATES_DIR = APPLICATION_DIR + SCAFFOLD_DIR
+		
 		
 		
 	}
 	
 	public void generateScaffold(String applicationDir) throws IOException
 	{	
-		log.info "Using templates dir: ${TEMPLATES_DIR+applicationDir}"
 		
-		for (Resource resource : gatherResources(TEMPLATES_DIR + applicationDir))
+		
+		log.info "Using templates dir: ${applicationDir}"
+		
+		for (Resource resource : gatherResources(applicationDir))
 		{
 			generateFile(resource)
 		}
 	}
 	
 	public void generateFile(Resource resource){
-		Path relativeFilePath = Paths.get(TEMPLATES_DIR).relativize(Paths.get(resource.file.path));
+		String filePath = resource.file.path
+		String templatesDir = extractPluginDir(filePath) + SCAFFOLD_DIR
+		Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(filePath))
+		
 		if(!resource.isReadable())
 		{
 			 log.debug "Resource is not readable: $relativeFilePath"
@@ -149,6 +151,13 @@ class CoreTemplateGenerator {
 				createFileFromTemplate(APPLICATION_DIR, outputFileName, resource, null)
 			}
 		}
+	}
+	
+	private String extractPluginDir(String filePath){
+		String unixFilePath = FilenameUtils.separatorsToUnix(filePath)
+		String unixScaffoldDirReqEx = FilenameUtils.separatorsToUnix(SCAFFOLD_DIR) + ".*"
+		String pluginDir = unixFilePath.replaceAll(unixScaffoldDirReqEx, "")
+		return pluginDir
 	}
 	
 	
@@ -213,7 +222,7 @@ class CoreTemplateGenerator {
 	protected void addBindingAndCreateFile(Writer out, Resource templateFile, GrailsDomainClass domainClass) throws IOException {
 		String templateText = getTemplateTextFromResource(templateFile);
 		if (!StringUtils.hasLength(templateText)) {
-			log.error "No lenght for template file."
+			log.error "No lenght for template file: ${templateFile.file.name}."
 			return;
 		}
 
