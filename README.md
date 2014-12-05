@@ -29,5 +29,11 @@ def doWithSpring = {
 And add templates to /src/templates/scaffold
 
 
+Reloading does not work when plugin is included like:
+grails.plugin.location.'scaffold-angular' = "../grails-scaffold-angular"
+better use folder syncer (e.g DirSync Pro). plugin development dir grails-scaffold-angular-smit\src\templates\ => app_dir/target\plugins\scaffold-angular-smit-0.3\src\templates\
+
+
+
 
 

@@ -22,8 +22,10 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	def templateGenerator = appCtx.getBean('templateGenerator')
 	
 	Map templatesLocators = appCtx.getBeansOfType(classLoader.loadClass("grails.plugin.scaffold.core.TemplatesLocator"));
-	println templatesLocators
-	/*templatesLocators.collect{it.value}.sort{it.order}.each{templatesLocator->
+	event("StatusUpdate", [
+		"Using plugins: ${templatesLocators.collect{it.key}}"
+	])
+	templatesLocators.collect{it.value}.sort{it.order}.each{templatesLocator->
 
 		event("StatusUpdate", [
 			"Generating application files from plugin ${templatesLocator.getPluginDir()} templates: $generateTemplatesSubdir"
@@ -35,5 +37,5 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 		
 		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir)
 		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
-	}*/
+	}
 }
