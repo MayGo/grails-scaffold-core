@@ -84,8 +84,9 @@ class CoreTemplateGenerator {
 	{	
 		
 		
-		log.info "Using templates dir: ${applicationDir}"
-		
+		println "Using templates dir: ${applicationDir}"
+		Map scaffoldDirs = Holders.config.grails.plugin.scaffold.core.folders
+		println "Using scaffold dirs from config:$scaffoldDirs"
 		for (Resource resource : gatherResources(applicationDir))
 		{
 			generateFile(resource)
@@ -109,8 +110,8 @@ class CoreTemplateGenerator {
 		// locate files output directory
 		String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
 		
-		if(!scaffoldDirs.containsKey(scaffoldDir)){
-			log.error "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders"
+		if(!scaffoldDirs.containsKey(scaffoldDir) || !scaffoldDirs[scaffoldDir]){
+			log.info "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders. Skipping file."
 			return
 		}
 		String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
