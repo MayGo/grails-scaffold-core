@@ -4,7 +4,7 @@ includeTargets << grailsScript("_GrailsCreateArtifacts")
 generateTemplatesSubdir=""
 
 target(scaffoldGenerate: "Generates controllers and extjs views for all domain classes.") {
-	depends(configureProxy, packageApp, classpath)
+	depends(configureProxy, packageApp, classpath, loadApp, configureApp)
 
 	def domainClasses = grailsApp.domainClasses
 
@@ -18,6 +18,10 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 		event("StatusFinal", ["No domain classes found"])
 		return
 	}
+	
+	//Init bootstrap to generate build-test-data data
+	def bootstrap = appCtx.getBean('bootStrap')
+	bootstrap.init()
 
 	def templateGenerator = appCtx.getBean('templateGenerator')
 	

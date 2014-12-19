@@ -1,7 +1,7 @@
 import grails.plugin.scaffold.core.ConfigUtility
 
 class ScaffoldCoreGrailsPlugin {
-    def version = "0.2.9"
+    def version = "0.2.11"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.4 > *"
 
@@ -31,6 +31,10 @@ Core functionality for scaffolding own tempates or templates provided by plugin.
 
     def doWithSpring = {
 		ConfigUtility.mergeDefaultConfig(application, 'ScaffoldCoreDefaultConfig')
+		
+		"bootStrap"(BootStrap) { bean ->
+			bean.autowire = 'byName'
+		}
 		coreTemplatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator, "scaffold-core", 100)
 		templateGenerator(CoreTemplateGenerator, application.classLoader, ref('coreTemplatesLocator')){
 			grailsApplication = application
