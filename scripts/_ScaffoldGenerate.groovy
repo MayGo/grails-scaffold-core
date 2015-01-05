@@ -20,6 +20,7 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	}
 	
 	//Init bootstrap to generate build-test-data data
+	println "Init bootstrap to generate build-test-data data"
 	def bootstrap = appCtx.getBean('bootStrap')
 	bootstrap.init()
 

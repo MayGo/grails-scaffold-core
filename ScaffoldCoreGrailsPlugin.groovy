@@ -1,9 +1,11 @@
 import grails.plugin.scaffold.core.ConfigUtility
 
 class ScaffoldCoreGrailsPlugin {
-    def version = "0.2.11"
+    def version = "0.3.1"
     // the version or versions of Grails the plugin is designed for
     def grailsVersion = "2.4 > *"
+	
+	List loadAfter = ['bootstrap']
 
     def title = "Scaffold Core Plugin" 
     def author = "Maigo Erit"
