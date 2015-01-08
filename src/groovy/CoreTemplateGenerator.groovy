@@ -111,7 +111,7 @@ class CoreTemplateGenerator {
 		String scaffoldDir = relativeFilePath.subpath(0, 1).toString()
 		
 		if(!scaffoldDirs.containsKey(scaffoldDir) || !scaffoldDirs[scaffoldDir]){
-			log.info "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders. Skipping file."
+			println "Dir $scaffoldDir not in config grails.plugin.scaffold.core.folders: $scaffoldDirs. Skipping file."
 			return
 		}
 		String outputFileName = scaffoldDirs[scaffoldDir] + fileRealPath
