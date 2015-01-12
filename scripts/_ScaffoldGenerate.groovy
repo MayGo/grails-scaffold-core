@@ -22,7 +22,18 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 	//Init bootstrap to generate build-test-data data
 	println "Init bootstrap to generate build-test-data data"
 	def bootstrap = appCtx.getBean('bootStrap')
-	bootstrap.init()
+	try {
+		bootstrap.init()
+	}catch (Exception ex) {
+		event("StatusUpdate", [
+			"If ConstraintHandlerException: Could not bootstrap application. There is a constraint error. Fix it in TestDataConfig.groovy and then run again 'grails createDemo'."
+			])
+		event("StatusUpdate", [
+			"Otherwise: Unknown error for scaffold plugin. Continuing...."
+			])
+		ex.printStackTrace();
+	}
+	
 
 	def templateGenerator = appCtx.getBean('templateGenerator')
 	

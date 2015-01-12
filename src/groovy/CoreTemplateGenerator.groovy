@@ -268,6 +268,12 @@ class CoreTemplateGenerator {
 		}
 		catch (IOException e) {
 			throw new RuntimeException(e);
+		}catch (grails.buildtestdata.handler.ConstraintHandlerException ex) {
+			log.error "Could not write file. There is a constraint error. Fix it in TestDataConfig.groovy and then run again 'grails createDemo'.\n...\n..\n."
+			ex.printStackTrace();
+		}catch (Exception ex) {
+			log.error "Unknown error for scaffold plugin. Continuing ..."
+			ex.printStackTrace();
 		}
 	}
 	
