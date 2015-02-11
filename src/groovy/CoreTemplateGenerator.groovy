@@ -269,9 +269,12 @@ class CoreTemplateGenerator {
 		catch (IOException e) {
 			throw new RuntimeException(e);
 		}catch (Exception ex) {
-			log.error "If ConstraintHandlerException: Could not bootstrap application. There is a constraint error." +
-						"Fix it in TestDataConfig.groovy and then run again 'grails createDemo'.\n" +
-						"Otherwise: Unknown error for scaffold plugin. Continuing...."
+			if(ex.getClass().getSimpleName() == "ConstraintHandlerException"){
+				log.error "If ConstraintHandlerException: Could not bootstrap application. There is a constraint error." +
+						"Fix it in TestDataConfig.groovy and then run again 'grails createDemo'.\n" 
+			}else{
+				log.error "Unknown error for scaffold plugin. Continuing...."
+			}
 			ex.printStackTrace();
 		}
 	}
