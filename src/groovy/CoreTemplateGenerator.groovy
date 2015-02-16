@@ -46,8 +46,7 @@ class CoreTemplateGenerator {
 	GrailsApplication grailsApplication
 	GrailsPluginManager pluginManager
 
-	ScaffoldingHelper scaffoldingHelper = new ScaffoldingHelper(pluginManager, DomainClassPropertyComparator.class,
-			getClass().classLoader, grailsApplication.config)
+	ScaffoldingHelper scaffoldingHelper
 
 
 	enum ScaffoldType {
@@ -62,10 +61,15 @@ class CoreTemplateGenerator {
 			]
 
 
-	CoreTemplateGenerator(ClassLoader classLoader, TemplatesLocator templatesLocator) {
-		engine = new SimpleTemplateEngine(classLoader);
-		APPLICATION_DIR = new File("").absolutePath
+	CoreTemplateGenerator(ClassLoader classLoader, TemplatesLocator templatesLocator, GrailsApplication
+			grailsApplication, GrailsPluginManager pluginManager) {
+		this.engine = new SimpleTemplateEngine(classLoader);
+		this.grailsApplication = grailsApplication
+		this.pluginManager = pluginManager
 
+		APPLICATION_DIR = new File("").absolutePath
+		this.scaffoldingHelper = new ScaffoldingHelper(pluginManager, DomainClassPropertyComparator.class,
+				getClass().classLoader, grailsApplication.config)
 
 	}
 

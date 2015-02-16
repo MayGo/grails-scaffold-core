@@ -17,8 +17,8 @@ class ScaffoldingHelper {
 	def comparator
 	def classLoader
 	def config
-	
-	ScaffoldingHelper(def pluginManager, def comparator, def classLoader){
+
+	ScaffoldingHelper(def pluginManager, def comparator, def classLoader, def config){
 		this.pluginManager = pluginManager
 		this.comparator = comparator
 		this.classLoader = classLoader
@@ -63,7 +63,7 @@ class ScaffoldingHelper {
 	 */
 	Map<GrailsDomainClassProperty, GrailsDomainClass> findRelationsProps(def domainClass, List<GrailsDomainClass>
 			domainClasses) {
-		
+
 		Map<GrailsDomainClassProperty, GrailsDomainClass> relationDomainClasses = [:]
 		domainClasses.each{
 			def relationProps = it.persistentProperties.findAll{it.type == domainClass.clazz}
@@ -71,7 +71,7 @@ class ScaffoldingHelper {
 				relationDomainClasses[relProp]=it
 			}
 		}
-				
+
 		return relationDomainClasses
 	}
 
@@ -90,15 +90,17 @@ class ScaffoldingHelper {
 		}
 		return assType
 	}
-	
+
 	Map getDomainClassDisplayNames(def domainClass, def property = null){
-		
+
 		Map displayNames = { [:].withDefault{ owner.call() } }()
-		
-		displayNames = config.grails.plugin.scaffold.core.displayNames
-		
+
+		displayNames.putAll((config.grails.plugin.scaffold.core.displayNames)?:[:])
+		/*displayNames = displayNames.collectEntries {
+			(it.respondsTo('containsKey'))? it : [it:null]
+		}*/
 		boolean returnDefaults = (!property || !displayNames[domainClass.name]?.containsKey(property.name) )
-		
+
 		if(returnDefaults){
 			List defaultDisplayNames = config.grails.plugin.scaffold.core.defaultDisplayNames
 			Map names = { [:].withDefault{ owner.call() } }()
@@ -112,7 +114,7 @@ class ScaffoldingHelper {
 			return names
 		}else{
 			//Make list to map
-			
+
 			if(displayNames[domainClass.name][property.name] instanceof List){
 				displayNames[domainClass.name][property.name] = displayNames[domainClass.name][property.name].collectEntries {[(it): null]}
 			}
