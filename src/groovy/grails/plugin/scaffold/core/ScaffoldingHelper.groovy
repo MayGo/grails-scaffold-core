@@ -93,32 +93,35 @@ class ScaffoldingHelper {
 
 	Map getDomainClassDisplayNames(def domainClass, def property = null){
 
-		Map displayNames = { [:].withDefault{ owner.call() } }()
+		Map displayNames = (config.grails.plugin.scaffold.core.displayNames)?:[:]
 
-		displayNames.putAll((config.grails.plugin.scaffold.core.displayNames)?:[:])
-		/*displayNames = displayNames.collectEntries {
-			(it.respondsTo('containsKey'))? it : [it:null]
-		}*/
-		boolean returnDefaults = (!property || !displayNames[domainClass.name]?.containsKey(property.name) )
+		Map propDisplayNames = fixDisplayNamesMap(displayNames[domainClass.shortName])
 
-		if(returnDefaults){
-			List defaultDisplayNames = config.grails.plugin.scaffold.core.defaultDisplayNames
-			Map names = { [:].withDefault{ owner.call() } }()
-			def usedDomainClass = (property?.getReferencedDomainClass())?:domainClass
-			Map firstLevelMap = displayNames[usedDomainClass.shortName]?.findAll{k,v->!v}
-			if(firstLevelMap){
-				names += firstLevelMap
-			}else{
-				usedDomainClass.persistentProperties.findAll{it.name in defaultDisplayNames}.each{names[it.name]}
+		if(property && propDisplayNames?.containsKey(property.name) ){
+			log.debug "Has property display names."
+			return propDisplayNames[property.name]
+		}else if(!property && propDisplayNames){
+			log.debug "Has simple display names."
+			return propDisplayNames
+		}
+
+		def usedDomainClass = property?.getReferencedDomainClass()
+		if(usedDomainClass){
+			Map refPropDisplayNames = fixDisplayNamesMap(displayNames[usedDomainClass.shortName])
+			if(refPropDisplayNames){
+				log.debug "Has referenced property names"
+				return refPropDisplayNames
 			}
-			return names
-		}else{
-			//Make list to map
+		}
 
-			if(displayNames[domainClass.name][property.name] instanceof List){
-				displayNames[domainClass.name][property.name] = displayNames[domainClass.name][property.name].collectEntries {[(it): null]}
-			}
-			return displayNames[domainClass.name][property.name]
+		log.debug "Returning no displaynames"
+		return [:]
+	}
+
+	private fixDisplayNamesMap(def displayNames){
+		//Make all simple string as map with null value
+		return displayNames?.collectEntries {
+			(it.respondsTo('containsKey'))? it : ["$it":null]
 		}
 	}
 }
