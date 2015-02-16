@@ -65,6 +65,6 @@ def configureHibernateSession() {
 	// without this you'll get a lazy initialization exception when using a many-to-many relationship
 	def sessionFactory = appCtx.getBean("sessionFactory")
 	def session = SessionFactoryUtils.getSession(sessionFactory, true)
-	println session
+
 	TransactionSynchronizationManager.bindResource(sessionFactory, new SessionHolder(session))
 }

@@ -16,15 +16,16 @@ class ScaffoldingHelper {
 	def pluginManager
 	def comparator
 	def classLoader
+	def config
 	
-	ScaffoldingHelper(def domainClass, def pluginManager, def comparator, def classLoader){
-		this.domainClass = domainClass
+	ScaffoldingHelper(def pluginManager, def comparator, def classLoader){
 		this.pluginManager = pluginManager
 		this.comparator = comparator
 		this.classLoader = classLoader
+		this.config = config
 	}
 
-	def getProps() {
+	def getProps(def domainClass) {
 		def excludedProps = Event.allEvents.toList() << 'version' << 'dateCreated' << 'lastUpdated'
 		def persistentPropNames = domainClass.persistentProperties*.name
 		boolean hasHibernate = pluginManager?.hasGrailsPlugin('hibernate') || pluginManager?.hasGrailsPlugin('hibernate4')
@@ -60,7 +61,8 @@ class ScaffoldingHelper {
 	 * @param domainClasses
 	 * @return
 	 */
-	Map<GrailsDomainClassProperty, GrailsDomainClass> findRelationsProps(List<GrailsDomainClass> domainClasses) {
+	Map<GrailsDomainClassProperty, GrailsDomainClass> findRelationsProps(def domainClass, List<GrailsDomainClass>
+			domainClasses) {
 		
 		Map<GrailsDomainClassProperty, GrailsDomainClass> relationDomainClasses = [:]
 		domainClasses.each{
@@ -89,7 +91,7 @@ class ScaffoldingHelper {
 		return assType
 	}
 	
-	static Map getDomainClassDisplayNames(domainClass, config, property = null){
+	Map getDomainClassDisplayNames(def domainClass, def property = null){
 		
 		Map displayNames = { [:].withDefault{ owner.call() } }()
 		
