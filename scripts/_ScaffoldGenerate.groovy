@@ -25,7 +25,6 @@ target(scaffoldGenerate: "Generates controllers and views for all domain classes
 	println "Init bootstrap to generate build-test-data data"
 	def bootstrap = appCtx.getBean('bootStrap')
 	try {
-		configureHibernateSession()
 		bootstrap.init()
 	}catch (Exception ex) {
 		if (ex.getClass().getSimpleName() == "ConstraintHandlerException") {
@@ -60,22 +59,5 @@ target(scaffoldGenerate: "Generates controllers and views for all domain classes
 
 		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir)
 		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
-	}
-}
-def configureHibernateSession() {
-	// without this you'll get a lazy initialization exception when using a many-to-many relationship
-	boolean hasHibernate4 = pluginManager?.hasGrailsPlugin('hibernate4')
-
-	def SessionFactoryUtils = classLoader.loadClass("org.springframework.orm.hibernate${hasHibernate4?4:3}" +
-			".SessionFactoryUtils");
-	def SessionHolder = classLoader.loadClass("org.springframework.orm.hibernate${hasHibernate4?4:3}.SessionHolder");
-
-	if(SessionHolder && SessionFactoryUtils) {
-		def sessionFactory = appCtx.getBean("sessionFactory")
-		def session = sessionFactory.openSession()
-
-		TransactionSynchronizationManager.bindResource(sessionFactory, SessionHolder.newInstance(session))
-	}else{
-		println "No SessionHolder or SessionFactoryUtils found"
 	}
 }
