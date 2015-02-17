@@ -5,7 +5,7 @@ class ScaffoldCoreGrailsPlugin {
 	// the version or versions of Grails the plugin is designed for
 	def grailsVersion = "2.4 > *"
 
-	List loadAfter = ['bootstrap']
+	List loadAfter = ['bootstrap', 'hibernate', 'hibernate4']
 
 	def title = "Scaffold Core Plugin"
 	def author = "Maigo Erit"

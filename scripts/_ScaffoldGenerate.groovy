@@ -1,6 +1,3 @@
-import org.codehaus.groovy.grails.commons.GrailsClassUtils as GCU
-import org.springframework.orm.hibernate3.SessionFactoryUtils
-import org.springframework.orm.hibernate3.SessionHolder
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
 includeTargets << grailsScript("_GrailsBootstrap")
@@ -8,7 +5,7 @@ includeTargets << grailsScript("_GrailsCreateArtifacts")
 
 generateTemplatesSubdir=""
 
-target(scaffoldGenerate: "Generates controllers and extjs views for all domain classes.") {
+target(scaffoldGenerate: "Generates controllers and views for all domain classes.") {
 	depends(configureProxy, packageApp, classpath, loadApp, configureApp)
 
 	def domainClasses = grailsApp.domainClasses
@@ -31,12 +28,16 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 		configureHibernateSession()
 		bootstrap.init()
 	}catch (Exception ex) {
-		event("StatusUpdate", [
-			"If ConstraintHandlerException: Could not bootstrap application. There is a constraint error. Fix it in TestDataConfig.groovy and then run again 'grails createDemo'."
+		if (ex.getClass().getSimpleName() == "ConstraintHandlerException") {
+			event("StatusUpdate", [
+					"If ConstraintHandlerException: Could not bootstrap application. There is a constraint error. Fix it in TestDataConfig.groovy and then run again 'grails createDemo'."
 			])
-		event("StatusUpdate", [
-			"Otherwise: Unknown error for scaffold plugin. Continuing...."
+		} else {
+			event("StatusUpdate", [
+					"Otherwise: Unknown error for scaffold plugin. Continuing...."
 			])
+		}
+		
 		ex.printStackTrace();
 	}
 	println "Bootstrap init done"
@@ -63,8 +64,32 @@ target(scaffoldGenerate: "Generates controllers and extjs views for all domain c
 }
 def configureHibernateSession() {
 	// without this you'll get a lazy initialization exception when using a many-to-many relationship
-	def sessionFactory = appCtx.getBean("sessionFactory")
-	def session = SessionFactoryUtils.getSession(sessionFactory, true)
+	def SessionFactoryUtils = classLoader.loadClass("org.springframework.orm.hibernate4.SessionFactoryUtils");
+	def SessionHolder = classLoader.loadClass("org.springframework.orm.hibernate4.SessionHolder");
+	if(!SessionFactoryUtils){
+		println "No hibernate4 SessionFactoryUtils."
+		SessionFactoryUtils = classLoader.loadClass("org.springframework.orm.hibernate3.SessionFactoryUtils");
+		if(!SessionFactoryUtils){
+			println "And no hibernate3 SessionFactoryUtils"
+		}else{
+			println "Using hibernate3 SessionFactoryUtils"
+		}
+	}
+	if(!SessionHolder){
+		println "No hibernate4 SessionHolder."
+		SessionFactoryUtils = classLoader.loadClass("org.springframework.orm.hibernate3.SessionHolder");
+		if(!SessionHolder){
+			println "And no hibernate3 SessionHolder"
+		}else{
+			println "Using hibernate3 SessionHolder"
+		}
+	}
+	if(SessionHolder && SessionFactoryUtils) {
+		def sessionFactory = appCtx.getBean("sessionFactory")
+		def session = SessionFactoryUtils.getSession(sessionFactory, true)
 
-	TransactionSynchronizationManager.bindResource(sessionFactory, new SessionHolder(session))
+		TransactionSynchronizationManager.bindResource(sessionFactory, SessionHolder.newInstance(session))
+	}else{
+		println "No SessionHolder or SessionFactoryUtils found"
+	}
 }
