@@ -64,7 +64,7 @@ target(scaffoldGenerate: "Generates controllers and views for all domain classes
 }
 def configureHibernateSession() {
 	// without this you'll get a lazy initialization exception when using a many-to-many relationship
-	boolean hasHibernate4 =pluginManager?.hasGrailsPlugin('hibernate4')
+	boolean hasHibernate4 = pluginManager?.hasGrailsPlugin('hibernate4')
 
 	def SessionFactoryUtils = classLoader.loadClass("org.springframework.orm.hibernate${hasHibernate4?4:3}" +
 			".SessionFactoryUtils");
@@ -72,7 +72,7 @@ def configureHibernateSession() {
 
 	if(SessionHolder && SessionFactoryUtils) {
 		def sessionFactory = appCtx.getBean("sessionFactory")
-		def session = SessionFactoryUtils.getSession(sessionFactory, true)
+		def session = sessionFactory.openSession()
 
 		TransactionSynchronizationManager.bindResource(sessionFactory, SessionHolder.newInstance(session))
 	}else{
