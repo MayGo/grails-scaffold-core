@@ -39,6 +39,28 @@ class ScaffoldingHelper {
 		def props = domainClass.properties.findAll {
 			persistentPropNames.contains(it.name) && !excludedProps.contains(it.name) && (domainClass.constrainedProperties[it.name] ? domainClass.constrainedProperties[it.name].display : true)
 		}
+		// Add Constraints, required proeprty and joinProperty to properties
+		props.each{p->
+
+			boolean required = false
+			def cp
+			if (hasHibernate) {
+				cp = domainClass.constrainedProperties[p.name]?:[:]
+				required = (cp ? !(cp.propertyType in [boolean, Boolean]) && !cp.nullable : false)
+			}
+			p.metaClass.cp = cp
+			p.metaClass.required = required
+			// Find if property is actually joinTable property. e.g. UserRole
+			def joinProperty
+			if(p.referencedDomainClass)  {
+				def persistentProperties = p.referencedDomainClass.persistentProperties
+				joinProperty = persistentProperties.find{
+					it != p &&
+							persistentProperties.size() == 2 && it.referencedDomainClass
+				}
+			}
+			p.metaClass.joinProperty = joinProperty
+		}
 		//sorting. id is first, then simple fields by name, then assaciations by type and then by name
 		props.sort{a, b ->
 			if (a.equals(domainClass.getIdentifier())) {

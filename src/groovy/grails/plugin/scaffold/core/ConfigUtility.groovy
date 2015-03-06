@@ -15,7 +15,7 @@ class ConfigUtility {
 		try {
 			secondary = (ConfigObject)slurper.parse(classLoader.loadClass(configFileName));
 		} catch (Exception e) {
-			log.error "Error loading deafult configuration."
+			log.error "Error loading default configuration."
 		}
 		
 		ConfigObject config = new ConfigObject();
