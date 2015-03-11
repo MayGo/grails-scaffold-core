@@ -98,19 +98,25 @@ class ScaffoldingHelper {
 	}
 
 	private String getAssociationType(def property) {
-		String assType = "";
+		String assocType = "";
 		if(property.isManyToMany()) {
-			assType = "4";
+			assocType = "4";
 		} else if(property.isOneToMany()) {
-			assType = "1";
+			assocType = "1";
 		} else if(property.isOneToOne()) {
-			assType = "2";
+			assocType = "2";
 		} else if(property.isManyToOne()) {
-			assType = "3";
+			assocType = "3";
 		} else if(property.isEmbedded()) {
-			assType = "0";
+			def embeddedProps = getProps(property.component).grep{it.cp?.display != false &&it.cp?.editable != false && it.name!= 'id'}
+			if(embeddedProps.size()==1){
+				assocType = "6";
+			}else{
+				assocType = "7";
+			}
+
 		}
-		return assType
+		return assocType
 	}
 
 	Map getDomainClassDisplayNames(def domainClass, def property = null){
