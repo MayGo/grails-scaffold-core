@@ -30,6 +30,7 @@ class CoreTemplateGenerator {
 
 	boolean overwrite = Holders.config.grails.plugin.scaffold.core.overwrite ?: true
 	List ignoreFileNames = Holders.config.grails.plugin.scaffold.core.ignoreFileNames ?: []
+	List ignoreDomainNames = Holders.config.grails.plugin.scaffold.core.ignoreDomainNames ?: []
 	boolean ignoreStatic = Holders.config.grails.plugin.scaffold.core.ignoreStatic ?: false
 
 	static String DEFAULT_URL = 'http://localhost:8080/'
@@ -45,6 +46,8 @@ class CoreTemplateGenerator {
 
 	GrailsApplication grailsApplication
 	GrailsPluginManager pluginManager
+
+	def excludedDomainClasses
 
 	ScaffoldingHelper scaffoldingHelper
 
@@ -66,6 +69,7 @@ class CoreTemplateGenerator {
 		this.engine = new SimpleTemplateEngine(classLoader);
 		this.grailsApplication = grailsApplication
 		this.pluginManager = pluginManager
+		this.excludedDomainClasses = getExcludedDomainClasses()
 
 		APPLICATION_DIR = new File("").absolutePath
 		this.scaffoldingHelper = new ScaffoldingHelper(pluginManager, DomainClassPropertyComparator.class,
@@ -119,7 +123,8 @@ class CoreTemplateGenerator {
 			boolean generateForEachDomain = outputFileName.find(~DYNAMIC_FILE_PATTERN)
 			boolean generatePartialFile = outputFileName.find(~PARTIAL_FILE_PATTERN)
 			if (generateForEachDomain) {
-				for (GrailsDomainClass domainClass : grailsApplication.domainClasses) {
+
+				for (GrailsDomainClass domainClass : getExcludedDomainClasses()) {
 					String parsedOutputFileName = outputFileName
 					outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each {
 						Closure parse = dynamicFoldersConf[it]
@@ -214,14 +219,16 @@ class CoreTemplateGenerator {
 		}*/
 
 		def config = grailsApplication.config
-		def domainClasses = grailsApplication.domainClasses
+		def excludedDomainClasses = getExcludedDomainClasses()
+
 		String defaultUrl = (config.grails.serverURL) ?: DEFAULT_URL + grailsApplication.metadata['app.name']
 
 		Map<String, Object> binding = new HashMap<String, Object>()
 		binding.put("pluginManager", pluginManager)
 		binding.put("comparator", DomainClassPropertyComparator.class);
 		binding.put("config", config)
-		binding.put("domainClasses", domainClasses)
+		binding.put("domainClasses", excludedDomainClasses)
+		binding.put("allDomainClasses", grailsApplication.domainClasses)
 		binding.put("scaffoldingHelper", scaffoldingHelper)
 		binding.put("appName", grailsApplication.metadata['app.name'].capitalize().replace(" ", ""))
 		binding.put("appUrl", (APP_URL) ?: defaultUrl)
@@ -235,6 +242,11 @@ class CoreTemplateGenerator {
 		}
 
 		generate(templateText, binding, out);
+	}
+
+	protected getExcludedDomainClasses(){
+		def domainClasses = grailsApplication.domainClasses
+		return domainClasses.grep{!ignoreDomainNames.contains(it.name)}
 	}
 
 	protected void generate(String templateText, Map<String, Object> binding, Writer out) {

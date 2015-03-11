@@ -6,6 +6,8 @@ grails{
 				//folders = ['backend':'', 'frontend':'web-app/jsapp/']//example
 				// Map of domain class names. contains list of maps
 				displayNames = [:]//e.g 'User':['group':['name']]
+				// don't generate files or menu for domains
+				ignoreDomainNames = []
 			}
 		}
 	}
