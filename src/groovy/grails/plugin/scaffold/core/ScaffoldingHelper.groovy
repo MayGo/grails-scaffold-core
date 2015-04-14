@@ -26,7 +26,7 @@ class ScaffoldingHelper {
 	}
 
 	def getProps(def domainClass) {
-		def excludedProps = Event.allEvents.toList() << 'version' << 'dateCreated' << 'lastUpdated'
+		def excludedProps = Event.allEvents.toList() << 'version'
 		def persistentPropNames = domainClass.persistentProperties*.name
 		boolean hasHibernate = pluginManager?.hasGrailsPlugin('hibernate') || pluginManager?.hasGrailsPlugin('hibernate4')
 		if (hasHibernate) {
