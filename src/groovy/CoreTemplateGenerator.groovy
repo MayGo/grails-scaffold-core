@@ -158,8 +158,10 @@ class CoreTemplateGenerator {
 			log.info "Writing file $fileName"
 			destFile.getParentFile().mkdirs();
 			BufferedWriter writer = null;
+
 			try {
-				writer = new BufferedWriter(new FileWriter(destFile));
+				writer = new BufferedWriter(new OutputStreamWriter(
+						new FileOutputStream(fileDir), "UTF8"));
 				addBindingAndCreateFile(writer, templateFile, domainClass);
 
 				try {

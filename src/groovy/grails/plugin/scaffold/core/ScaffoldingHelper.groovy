@@ -1,5 +1,7 @@
 package grails.plugin.scaffold.core
 
+import grails.util.GrailsNameUtils
+
 import java.util.List;
 import java.util.Map;
 
@@ -123,7 +125,8 @@ class ScaffoldingHelper {
 
 		Map displayNames = (config.grails.plugin.scaffold.core.displayNames)?:[:]
 
-		Map propDisplayNames = fixDisplayNamesMap(displayNames[domainClass.shortName])
+		String shortName = (domainClass instanceof GrailsDomainClass)?domainClass.shortName:GrailsNameUtils.getShortName(domainClass)
+		Map propDisplayNames = fixDisplayNamesMap(displayNames[shortName])
 
 		if(property && propDisplayNames?.containsKey(property.name) ){
 			log.debug "Has property display names."
@@ -135,7 +138,8 @@ class ScaffoldingHelper {
 
 		def usedDomainClass = property?.getReferencedDomainClass()
 		if(usedDomainClass){
-			Map refPropDisplayNames = fixDisplayNamesMap(displayNames[usedDomainClass.shortName])
+			shortName = (usedDomainClass instanceof GrailsDomainClass)?usedDomainClass.shortName:GrailsNameUtils.getShortName(usedDomainClass)
+			Map refPropDisplayNames = fixDisplayNamesMap(displayNames[shortName])
 			if(refPropDisplayNames){
 				log.debug "Has referenced property names"
 				return refPropDisplayNames
