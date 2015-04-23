@@ -53,14 +53,14 @@ Other examples:
 * scaffoldingHelper - look ScaffoldingHelper.groovy
 * appName - grailsApplication.metadata['app.name'].capitalize().replace(" ", "")
 * appUrl - serverURL | 'localhost:8080/'+metadata['app.name']
-** + Templates that are generated for every domain class **
+**+Templates that are generated for every domain class**
 * domainClass - GrailsDomainClass
 * packageName - domainClass.packageName
 * className - domainClass.shortName
 * propertyName - domainClass.propertyName
 
  
-** For partials there are CoreTemplateGenerator properties **
+**For partials there are CoreTemplateGenerator properties**
 * ignoreFileNames - grails.plugin.scaffold.core.ignoreFileNames
 * ignoreDomainNames - grails.plugin.scaffold.core.ignoreFileNames
 * ignoreStatic - grails.plugin.scaffold.core.ignoreStatic
