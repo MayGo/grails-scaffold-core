@@ -45,29 +45,29 @@ Other examples:
 
 ## Properties in templates 
 
-pluginManager - GrailsPluginManager
-comparator - DomainClassPropertyComparator.class
-config - grailsApplication.config
-domainClasses- excludedDomainClasses
-allDomainClasses- grailsApplication.domainClasses
-scaffoldingHelper - look ScaffoldingHelper.groovy
-appName - grailsApplication.metadata['app.name'].capitalize().replace(" ", "")
-appUrl - serverURL | 'localhost:8080/'+metadata['app.name']
+* pluginManager - GrailsPluginManager
+* comparator - DomainClassPropertyComparator.class
+* config - grailsApplication.config
+* domainClasses- excludedDomainClasses
+* allDomainClasses- grailsApplication.domainClasses
+* scaffoldingHelper - look ScaffoldingHelper.groovy
+* appName - grailsApplication.metadata['app.name'].capitalize().replace(" ", "")
+* appUrl - serverURL | 'localhost:8080/'+metadata['app.name']
 ** + Templates that are generated for every domain class **
-domainClass - GrailsDomainClass
-packageName - domainClass.packageName
-className - domainClass.shortName
-propertyName - domainClass.propertyName
+* domainClass - GrailsDomainClass
+* packageName - domainClass.packageName
+* className - domainClass.shortName
+* propertyName - domainClass.propertyName
 
  
 ** For partials there are CoreTemplateGenerator properties **
-ignoreFileNames - grails.plugin.scaffold.core.ignoreFileNames
-ignoreDomainNames - grails.plugin.scaffold.core.ignoreFileNames
-ignoreStatic - grails.plugin.scaffold.core.ignoreStatic
-grailsApplication - grailsApplication
-pluginManager - GrailsPluginManager
-excludedDomainClasses - domainClasses - ignoreDomainNames
-scaffoldingHelper - ScaffoldingHelper.groovy
+* ignoreFileNames - grails.plugin.scaffold.core.ignoreFileNames
+* ignoreDomainNames - grails.plugin.scaffold.core.ignoreFileNames
+* ignoreStatic - grails.plugin.scaffold.core.ignoreStatic
+* grailsApplication - grailsApplication
+* pluginManager - GrailsPluginManager
+* excludedDomainClasses - domainClasses - ignoreDomainNames
+* scaffoldingHelper - ScaffoldingHelper.groovy
 
 
 # Config
