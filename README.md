@@ -1,6 +1,8 @@
 # grails-scaffold-core
 
-Core functionality for scaffolding own tempates or  templates provided by plugin. e.g. grails-scaffold-angular
+Plugin makes possible to scaffold everything.
+
+Core functionality for scaffolding tempates in /src/groovy/scaffold/ or  templates provided by plugin. e.g. grails-scaffold-angular
 
 # Usage
 
