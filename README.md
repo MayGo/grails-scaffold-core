@@ -53,6 +53,7 @@ Other examples:
 * scaffoldingHelper - look ScaffoldingHelper.groovy
 * appName - grailsApplication.metadata['app.name'].capitalize().replace(" ", "")
 * appUrl - serverURL | 'localhost:8080/'+metadata['app.name']
+
 **+Templates that are generated for every domain class**
 * domainClass - GrailsDomainClass
 * packageName - domainClass.packageName
