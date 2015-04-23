@@ -161,7 +161,7 @@ class CoreTemplateGenerator {
 
 			try {
 				writer = new BufferedWriter(new OutputStreamWriter(
-						new FileOutputStream(fileDir), "UTF8"));
+						new FileOutputStream(destFile), "UTF8"));
 				addBindingAndCreateFile(writer, templateFile, domainClass);
 
 				try {
