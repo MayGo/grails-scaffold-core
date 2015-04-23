@@ -20,7 +20,9 @@ Template folder: ```src\templates\scaffold\backendSrc\ ```
 Scaffolding is generated in src folder with config: ```folders = ['backendSrc':'src/']```
 
 In every "package" folders there should be ```static``` and ```dynamic``` folder
+
 ```static``` - Static files that are not treated as templates (images, js plugins, css). Static files are generated only once if ```ignoreStatic = true``` is set
+
 ```dynamic``` - Every file in there is treated as template file.
 
 ## Generated for every domain class
