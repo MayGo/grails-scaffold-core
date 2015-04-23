@@ -17,6 +17,7 @@ Plugins templates are should be in directory
 Then  comes "package" name. With that you can configure generated content location.
 
 Template folder: ```src\templates\scaffold\backendSrc\ ```
+
 Scaffolding is generated in src folder with config: ```folders = ['backendSrc':'src/']```
 
 In every "package" folders there should be ```static``` and ```dynamic``` folder
