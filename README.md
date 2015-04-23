@@ -21,7 +21,26 @@ In every "package" folders there should be ```static``` and ```dynamic``` folder
 ```static``` - Static files that are not treated as templates (images, js plugins, css). Static files are generated only once if ```ignoreStatic = true``` is set
 ```dynamic``` - Every file in there is treated as template file.
 
-...\grails-app\controllers\__packageName__\__shortName__Controller.groovy
+**Generated for every domain class.**
+In every "dynamic" folder there can be folders:
+ e.g: foo.bar.someDomainObject
+* __propertyName__ - someDomainObject/
+* __shortName__ - SomeDomainObject/
+* __packageName__ foo/bar/
+In every "dynamic" folder there can be files:
+
+* __propertyName__Service.groovy - someDomainObjectService.groovy
+* __shortName__Service.groovy - SomeDomainObjectService.groovy
+* __packageName__ - don't use in filenames
+
+Other examples:
+* ```src\templates\scaffold\\dynamic\controllers\__packageName__\__shortName__Controller.groovy```
+* ```src\templates\scaffold\dynamic\conf\__Bootstrap.groovy```
+* ```src\templates\scaffold\dynamic\conf\CustomMarshallerRegistrar.groovy```
+
+**Generated only once.**
+
+...
 ...\grails-app\conf\__Bootstrap.groovy
 Map[ regex: closure ]
 
