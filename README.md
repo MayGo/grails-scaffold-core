@@ -40,8 +40,8 @@ Other examples:
 
 ## Generated only once
 
-* SomeFile.someextentsion
-* __Bootstrap.groovy - Partial file that adds content to existing file. File content is Map[ regex: closure ] . regex - place where content is added.
+* ```SomeFile.someextentsion``` - every file is generated with original name and extension
+* ```__Bootstrap.groovy``` - Partial file that adds content to existing file. File content is Map[ regex: closure ] . regex - place where content is added.
 
 ## Properties in templates 
 
