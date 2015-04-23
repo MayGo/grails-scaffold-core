@@ -10,11 +10,11 @@ Generates everything in src/templates/scaffold directory.
 
 # Architecture
 Plugins templates are should be in directory
-```src\templates\scaffold\```
+```src\templates\scaffold\ ```
 
 Then  comes "package" name. With that you can configure generated content location.
 
-Template folder: ```src\templates\scaffold\backendSrc\```
+Template folder: ```src\templates\scaffold\backendSrc\ ```
 Scaffolding is generated in src folder with config: ```folders = ['backendSrc':'src/']```
 
 In every "package" folders there should be ```static``` and ```dynamic``` folder
