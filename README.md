@@ -21,7 +21,7 @@ In every "package" folders there should be ```static``` and ```dynamic``` folder
 ```static``` - Static files that are not treated as templates (images, js plugins, css). Static files are generated only once if ```ignoreStatic = true``` is set
 ```dynamic``` - Every file in there is treated as template file.
 
-**Generated for every domain class.**
+## Generated for every domain class
 In every "dynamic" folder there can be folders:
  e.g: foo.bar.someDomainObject
 * __propertyName__ - someDomainObject/
@@ -38,11 +38,37 @@ Other examples:
 * ```src\templates\scaffold\dynamic\conf\__Bootstrap.groovy```
 * ```src\templates\scaffold\dynamic\conf\CustomMarshallerRegistrar.groovy```
 
-**Generated only once.**
+## Generated only once
 
-...
-...\grails-app\conf\__Bootstrap.groovy
-Map[ regex: closure ]
+* SomeFile.someextentsion
+* __Bootstrap.groovy - Partial file that adds content to existing file. File content is Map[ regex: closure ] . regex - place where content is added.
+
+## Properties in templates 
+
+pluginManager - GrailsPluginManager
+comparator - DomainClassPropertyComparator.class
+config - grailsApplication.config
+domainClasses- excludedDomainClasses
+allDomainClasses- grailsApplication.domainClasses
+scaffoldingHelper - look ScaffoldingHelper.groovy
+appName - grailsApplication.metadata['app.name'].capitalize().replace(" ", "")
+appUrl - serverURL | 'localhost:8080/'+metadata['app.name']
+** + Templates that are generated for every domain class **
+domainClass - GrailsDomainClass
+packageName - domainClass.packageName
+className - domainClass.shortName
+propertyName - domainClass.propertyName
+
+ 
+** For partials there are CoreTemplateGenerator properties **
+ignoreFileNames - grails.plugin.scaffold.core.ignoreFileNames
+ignoreDomainNames - grails.plugin.scaffold.core.ignoreFileNames
+ignoreStatic - grails.plugin.scaffold.core.ignoreStatic
+grailsApplication - grailsApplication
+pluginManager - GrailsPluginManager
+excludedDomainClasses - domainClasses - ignoreDomainNames
+scaffoldingHelper - ScaffoldingHelper.groovy
+
 
 # Config
 ```
