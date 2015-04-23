@@ -31,9 +31,9 @@ In every "package" folders there should be ```static``` and ```dynamic``` folder
 
 src\templates\scaffold\backend\dynamic\src\groovy\__packageName__\__shortName__Controller.groovy
 
-src\templates\scaffold\backend\grails-app\controllers\__packageName__\__shortName__Controller.groovy 
+src\templates\scaffold\backend\dynamic\grails-app\controllers\__packageName__\__shortName__Controller.groovy 
 
-src\templates\scaffold\backend\grails-app\conf\__Bootstrap.groovy 
+src\templates\scaffold\backend\dynamic\grails-app\conf\__Bootstrap.groovy 
 ```
 
 
