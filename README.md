@@ -12,23 +12,19 @@ Generates everything in src/templates/scaffold directory.
 Plugins templates are should be in directory
 ```src\templates\scaffold\```
 
-Then  comes "package" name. With that you can configure
-src\templates\scaffold\frontend\static
-src\templates\scaffold\frontend\dynamic
+Then  comes "package" name. With that you can configure generated content location.
+
+Template folder: ```src\templates\scaffold\backendSrc\```
+Scaffolding is generated in src folder with config: ```folders = ['backendSrc':'src/']```
+
+In every "package" folders there should be ```static``` and ```dynamic``` folder
+```static``` - Static files that are not treated as templates (images, js plugins, css). Static files are generated only once if ```ignoreStatic = true``` is set
+```dynamic``` - Every file in there is treated as template file.
+
 ...\grails-app\controllers\__packageName__\__shortName__Controller.groovy
 ...\grails-app\conf\__Bootstrap.groovy
 Map[ regex: closure ]
 
-
-# Developing new plugin
-Lines to be added to Scaffold*GrailsPlugin
-```
-def dependsOn = [scaffoldCore: "0.1"]
-
-def doWithSpring = {
-    templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator, "%%pluginName%%")
-}
-```
 # Config
 ```
 grails{
@@ -48,6 +44,17 @@ grails{
     }
 }
 ```
+
+# Developing new plugin
+Lines to be added to Scaffold*GrailsPlugin
+```
+def dependsOn = [scaffoldCore: "0.1"]
+
+def doWithSpring = {
+    templatesLocator(grails.plugin.scaffold.core.DefaultTemplatesLocator, "%%pluginName%%")
+}
+```
+
 And add templates to /src/templates/scaffold
 
 # Misc problems
