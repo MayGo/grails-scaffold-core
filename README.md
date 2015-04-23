@@ -27,7 +27,8 @@ In every "package" folders there should be ```static``` and ```dynamic``` folder
 ```dynamic``` - Every file in there is treated as template file.
 
 **Full path examples**
-``` src\templates\scaffold\backend\static\grails-app\config\SomeOtherConfig.groovy 
+``` 
+src\templates\scaffold\backend\static\grails-app\config\SomeOtherConfig.groovy 
 
 src\templates\scaffold\backend\dynamic\src\groovy\__packageName__\__shortName__Controller.groovy
 
