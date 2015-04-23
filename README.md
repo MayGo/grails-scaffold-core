@@ -24,7 +24,7 @@ In every "package" folders there should be ```static``` and ```dynamic``` folder
 ## Generated for every domain class
 In every "dynamic" folder there can be folders:
  e.g: foo.bar.someDomainObject
-* __propertyName__ - someDomainObject/
+* ```__propertyName__``` - someDomainObject/
 * __shortName__ - SomeDomainObject/
 * __packageName__ foo/bar/
 In every "dynamic" folder there can be files:
