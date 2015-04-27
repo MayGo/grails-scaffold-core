@@ -1,29 +1,32 @@
 package grails.plugin.scaffold.core
 
 import grails.util.Environment
-import groovy.util.ConfigObject;
+import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
-import org.codehaus.groovy.grails.commons.GrailsApplication;
+
+import org.codehaus.groovy.grails.commons.AbstractGrailsApplication
+import org.codehaus.groovy.grails.commons.GrailsApplication
 
 @Slf4j
+@CompileStatic
 class ConfigUtility {
 
-	public static void mergeDefaultConfig(GrailsApplication application, String configFileName) {
-		GroovyClassLoader classLoader = new GroovyClassLoader(ConfigUtility.class.getClassLoader());
-		ConfigSlurper slurper = new ConfigSlurper(Environment.getCurrent().getName());
-		ConfigObject secondary = null;
+	static void mergeDefaultConfig(GrailsApplication application, String configFileName) {
+		GroovyClassLoader classLoader = new GroovyClassLoader(ConfigUtility.classLoader)
+		ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
+		ConfigObject secondary
 		try {
-			secondary = (ConfigObject)slurper.parse(classLoader.loadClass(configFileName));
+			secondary = slurper.parse(classLoader.loadClass(configFileName))
 		} catch (Exception e) {
 			log.error "Error loading default configuration."
 		}
-		
-		ConfigObject config = new ConfigObject();
+
+		ConfigObject config = new ConfigObject()
 		if (secondary == null) {
-			config.putAll(application.config);
+			config.putAll(application.config)
 		} else {
-			config.putAll(secondary.merge(application.config));
+			config.putAll(secondary.merge(application.config))
 		}
-		application.config = config
+		((AbstractGrailsApplication)application).config = config
 	}
 }

@@ -1,8 +1,8 @@
 package grails.plugin.scaffold.core
 
-import java.io.File;
-import java.io.IOException;
+import groovy.transform.CompileStatic
 
+@CompileStatic
 interface TemplatesLocator {
-	File getPluginDir() throws IOException 
+	File getPluginDir() throws IOException
 }
