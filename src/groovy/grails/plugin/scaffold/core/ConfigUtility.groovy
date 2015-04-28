@@ -4,14 +4,14 @@ import grails.util.Environment
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
 
-import org.codehaus.groovy.grails.commons.AbstractGrailsApplication
-import org.codehaus.groovy.grails.commons.GrailsApplication
+import org.codehaus.groovy.grails.commons.DefaultGrailsApplication
+
 
 @Slf4j
 @CompileStatic
 class ConfigUtility {
 
-	static void mergeDefaultConfig(GrailsApplication application, String configFileName) {
+	static void mergeDefaultConfig(DefaultGrailsApplication application, String configFileName) {
 		GroovyClassLoader classLoader = new GroovyClassLoader(ConfigUtility.classLoader)
 		ConfigSlurper slurper = new ConfigSlurper(Environment.current.name)
 		ConfigObject secondary
@@ -27,6 +27,6 @@ class ConfigUtility {
 		} else {
 			config.putAll(secondary.merge(application.config))
 		}
-		((AbstractGrailsApplication)application).config = config
+		application.config = config
 	}
 }
