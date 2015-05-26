@@ -70,7 +70,7 @@ class CoreTemplateGenerator {
 
 		pluginConfig = grailsApplication.config.grails.plugin.scaffold.core
 		APP_URL = pluginConfig.appUrl ?: ''
-		overwrite = pluginConfig.overwrite ?: true
+		overwrite = pluginConfig.overwrite != null ? pluginConfig.overwrite : true
 		ignoreFileNames = pluginConfig.ignoreFileNames ?: []
 		ignoreDomainNames = pluginConfig.ignoreDomainNames ?: []
 		ignoreStatic = pluginConfig.ignoreStatic ?: false
