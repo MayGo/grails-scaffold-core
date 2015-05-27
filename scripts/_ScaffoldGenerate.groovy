@@ -57,7 +57,7 @@ target(scaffoldGenerate: "Generates controllers and views for all domain classes
 		//Check if has templates in plugin(core plugin has none), if has not use application templates
 		if(!templateGenerator.templatesExists(templatesDir)) templatesDir = templateGenerator.APPLICATION_DIR + templateGenerator.SCAFFOLD_DIR
 
-		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir)
+		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir, generateTemplatesSubdir as Boolean)
 		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
 	}
 }

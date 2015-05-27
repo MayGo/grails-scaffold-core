@@ -85,12 +85,11 @@ class CoreTemplateGenerator {
 				getClass().classLoader, grailsApplication.config)
 	}
 
-	void generateScaffold(String applicationDir) throws IOException {
-
+	void generateScaffold(String applicationDir, Boolean containsSubDir) throws IOException {
 		println "Using templates dir: ${applicationDir}"
 		Map scaffoldDirs = pluginConfig.folders
 		println "Using scaffold dirs from config:$scaffoldDirs"
-		for (Resource resource : gatherResources(applicationDir)) {
+		for (Resource resource : gatherResources(applicationDir, containsSubDir)) {
 			generateFile(resource)
 		}
 	}
@@ -293,25 +292,22 @@ class CoreTemplateGenerator {
 		return new FileSystemResource(templatesDir).exists()
 	}
 
-	private Resource[] gatherResources(String templatesDir) {
+	private Resource[] gatherResources(String templatesDir, Boolean containsSubDir) {
 		// Add trailing / to folder path
 		templatesDir = Paths.get(templatesDir).toString()
 
 		Resource[] resources = []
 
-		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver()
 		Resource templatesResource = new FileSystemResource(templatesDir)
 		if (templatesResource.exists()) {
 			try {
 				String staticFolderName = ScaffoldType.STATIC.name().toLowerCase()
 				String dynamicFolderName = ScaffoldType.DYNAMIC.name().toLowerCase()
 
-				Resource[] dynamicResources =resolver.getResources("file:" + templatesDir + "/*/" + dynamicFolderName +
-						"/**/*")
+				Resource[] dynamicResources = getResources(templatesDir, containsSubDir, dynamicFolderName)
 				resources = ArrayUtils.addAll(resources, dynamicResources)
 				if (!ignoreStatic) {
-					Resource[] staticResources = resolver.getResources("file:" + templatesDir + "/*/" +
-							staticFolderName + "/**/*")
+					Resource[] staticResources = getResources(templatesDir, containsSubDir, staticFolderName)
 					resources = ArrayUtils.addAll(resources, staticResources)
 				}
 			} catch (e) {
@@ -323,6 +319,12 @@ class CoreTemplateGenerator {
 
 		return resources.grep{!ignoreFileNames.contains(it.filename)}
 	}
+
+    private Resource[] getResources(String templatesDir, Boolean containsSubDir, folderName){
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver()
+        String path = "file:" + templatesDir + (containsSubDir ? "/" : "/*/") + folderName + "/**/*"
+        return resolver.getResources(path)
+    }
 
 	protected String getTemplateTextFromResource(Resource templateFile) throws IOException {
 		InputStream inputStream = templateFile.inputStream
