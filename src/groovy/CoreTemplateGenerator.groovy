@@ -85,17 +85,16 @@ class CoreTemplateGenerator {
 				getClass().classLoader, grailsApplication.config)
 	}
 
-	void generateScaffold(String applicationDir) throws IOException {
-
+	void generateScaffold(String applicationDir, Boolean containsSubDir, String domainClassName) throws IOException {
 		println "Using templates dir: ${applicationDir}"
 		Map scaffoldDirs = pluginConfig.folders
 		println "Using scaffold dirs from config:$scaffoldDirs"
-		for (Resource resource : gatherResources(applicationDir)) {
-			generateFile(resource)
+		for (Resource resource : gatherResources(applicationDir, containsSubDir)) {
+			generateFile(resource, domainClassName)
 		}
 	}
 
-	void generateFile(Resource resource) {
+	void generateFile(Resource resource, String domainClassName) {
 		String filePath = resource.file.path
 		String templatesDir = extractPluginDir(filePath) + SCAFFOLD_DIR
 		Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(filePath))
@@ -130,15 +129,16 @@ class CoreTemplateGenerator {
 			boolean generateForEachDomain = outputFileName.find(~DYNAMIC_FILE_PATTERN)
 			boolean generatePartialFile = outputFileName.find(~PARTIAL_FILE_PATTERN)
 			if (generateForEachDomain) {
-
-				for (GrailsDomainClass domainClass : getExcludedDomainClasses()) {
-					String parsedOutputFileName = outputFileName
-					outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each {
-						Closure parse = dynamicFoldersConf[it]
-						parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
-					}
-					createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
-				}
+                for (GrailsDomainClass domainClass : getExcludedDomainClasses()) {
+                    if("*".equals(domainClassName) || domainClass.clazz.simpleName.equals(domainClassName)){
+                        String parsedOutputFileName = outputFileName
+                        outputFileName.findAll(~DYNAMIC_FILE_PATTERN).each {
+                            Closure parse = dynamicFoldersConf[it]
+                            parsedOutputFileName = parsedOutputFileName.replace(it, parse(domainClass))
+                        }
+                        createFileFromTemplate(APPLICATION_DIR, parsedOutputFileName, resource, domainClass)
+                    }
+                }
 			} else if (generatePartialFile) {
 				String parsedOutputFileName = outputFileName.replace("__", "")
 				createFileFromPartial(APPLICATION_DIR, parsedOutputFileName, resource)
@@ -293,25 +293,22 @@ class CoreTemplateGenerator {
 		return new FileSystemResource(templatesDir).exists()
 	}
 
-	private Resource[] gatherResources(String templatesDir) {
+	private Resource[] gatherResources(String templatesDir, Boolean containsSubDir) {
 		// Add trailing / to folder path
 		templatesDir = Paths.get(templatesDir).toString()
 
 		Resource[] resources = []
 
-		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver()
 		Resource templatesResource = new FileSystemResource(templatesDir)
 		if (templatesResource.exists()) {
 			try {
 				String staticFolderName = ScaffoldType.STATIC.name().toLowerCase()
 				String dynamicFolderName = ScaffoldType.DYNAMIC.name().toLowerCase()
 
-				Resource[] dynamicResources =resolver.getResources("file:" + templatesDir + "/*/" + dynamicFolderName +
-						"/**/*")
+				Resource[] dynamicResources = getResources(templatesDir, containsSubDir, dynamicFolderName)
 				resources = ArrayUtils.addAll(resources, dynamicResources)
 				if (!ignoreStatic) {
-					Resource[] staticResources = resolver.getResources("file:" + templatesDir + "/*/" +
-							staticFolderName + "/**/*")
+					Resource[] staticResources = getResources(templatesDir, containsSubDir, staticFolderName)
 					resources = ArrayUtils.addAll(resources, staticResources)
 				}
 			} catch (e) {
@@ -323,6 +320,12 @@ class CoreTemplateGenerator {
 
 		return resources.grep{!ignoreFileNames.contains(it.filename)}
 	}
+
+    private Resource[] getResources(String templatesDir, Boolean containsSubDir, folderName){
+		PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver()
+        String path = "file:" + templatesDir + (containsSubDir ? "/" : "/*/") + folderName + "/**/*"
+        return resolver.getResources(path)
+    }
 
 	protected String getTemplateTextFromResource(Resource templateFile) throws IOException {
 		InputStream inputStream = templateFile.inputStream

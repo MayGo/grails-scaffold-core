@@ -1,6 +1,6 @@
 includeTargets << new File(scaffoldCorePluginDir, 'scripts/_ScaffoldGenerate.groovy')
 
-target( createDemo:'Generate demo application (all artefacts)' ) {
+target( scaffold:'Generate scaffold artifact' ) {
   	depends(checkVersion, parseArguments, packageApp)
 	  
 	  
@@ -11,4 +11,4 @@ target( createDemo:'Generate demo application (all artefacts)' ) {
 	scaffoldGenerate()
 }
 
-setDefaultTarget( createDemo )
+setDefaultTarget( scaffold )
