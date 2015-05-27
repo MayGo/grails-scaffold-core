@@ -6,6 +6,8 @@ target( createDemo:'Generate demo application (all artefacts)' ) {
 	  
 	String name = argsMap["params"][0]
 	generateTemplatesSubdir = (name)?:""
+	String domainClassNameParam = argsMap["params"][1]
+	domainClassName = (domainClassNameParam)?:"*"
 	scaffoldGenerate()
 }
 

@@ -4,6 +4,7 @@ includeTargets << grailsScript("_GrailsBootstrap")
 includeTargets << grailsScript("_GrailsCreateArtifacts")
 
 generateTemplatesSubdir=""
+domainClassName=""
 
 target(scaffoldGenerate: "Generates controllers and views for all domain classes.") {
 	depends(configureProxy, packageApp, classpath, loadApp, configureApp)
@@ -57,7 +58,7 @@ target(scaffoldGenerate: "Generates controllers and views for all domain classes
 		//Check if has templates in plugin(core plugin has none), if has not use application templates
 		if(!templateGenerator.templatesExists(templatesDir)) templatesDir = templateGenerator.APPLICATION_DIR + templateGenerator.SCAFFOLD_DIR
 
-		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir, generateTemplatesSubdir as Boolean)
+		templateGenerator.generateScaffold(templatesDir + generateTemplatesSubdir, generateTemplatesSubdir as Boolean, domainClassName)
 		event("StatusFinal", ["Finished generation of application files from plugin ${templatesLocator.getPluginDir()} templates."])
 	}
 }
