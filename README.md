@@ -7,6 +7,20 @@ Core functionality for scaffolding tempates in /src/groovy/scaffold/ or  templat
 # Usage
 
 ```grails create-demo```
+or
+```grails scaffold```
+
+Both does the same thing and accepts same parameters.
+
+
+```grails scaffold templateFolder domainClass```
+Both (templateFolder and domainClass) parameters can receive an asterisk to specify all.
+examples:
+```grails scaffold backendRestGrailsApp *```
+```grails scaffold backendRestGrailsApp User```
+```grails scaffold * User```
+
+
 
 Generates everything in src/templates/scaffold directory.
 
