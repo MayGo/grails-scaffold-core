@@ -14,10 +14,15 @@ Both does the same thing and accepts same parameters.
 
 
 ```grails scaffold templateFolder domainClass```
+
 Both (templateFolder and domainClass) parameters can receive an asterisk to specify all.
+
 examples:
+
 ```grails scaffold backendRestGrailsApp *```
+
 ```grails scaffold backendRestGrailsApp User```
+
 ```grails scaffold * User```
 
 
