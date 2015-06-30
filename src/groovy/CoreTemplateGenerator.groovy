@@ -94,7 +94,7 @@ class CoreTemplateGenerator {
 		}
 	}
 
-	void generateFile(Resource resource, String domainClassName) {
+	void generateFile(Resource resource, String domainClassName = '*') {
 		String filePath = resource.file.path
 		String templatesDir = extractPluginDir(filePath) + SCAFFOLD_DIR
 		Path relativeFilePath = Paths.get(templatesDir).relativize(Paths.get(filePath))
