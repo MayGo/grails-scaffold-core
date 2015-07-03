@@ -2,7 +2,7 @@ import grails.plugin.scaffold.core.ConfigUtility
 import grails.plugin.scaffold.core.DefaultTemplatesLocator
 
 class ScaffoldCoreGrailsPlugin {
-	def version = "1.3.1"
+	def version = "1.3.2"
 	def grailsVersion = "2.4 > *"
 	def loadAfter = ['bootstrap', 'hibernate', 'hibernate4']
 	def title = "Scaffold Core Plugin"

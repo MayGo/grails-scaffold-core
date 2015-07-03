@@ -239,6 +239,7 @@ class CoreTemplateGenerator {
 			allDomainClasses: grailsApplication.domainClasses,
 			scaffoldingHelper: scaffoldingHelper,
 			appName: grailsApplication.metadata.getApplicationName().capitalize().replace(" ", ""),
+			grailsApplication: grailsApplication,
 			appUrl: APP_URL ?: defaultUrl
 		]
 		if (domainClass) {
